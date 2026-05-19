@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d0d1a"/>
+      <stop offset="100%" style="stop-color:#0a2a2a"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="192" height="192" rx="36" fill="url(#bg)"/>
+  <!-- Pipeline nodes and connectors -->
+  <circle cx="40" cy="96" r="12" fill="#00d4aa" filter="url(#glow)"/>
+  <circle cx="96" cy="56" r="12" fill="#00d4aa" filter="url(#glow)"/>
+  <circle cx="96" cy="136" r="12" fill="#00d4aa" filter="url(#glow)"/>
+  <circle cx="152" cy="96" r="12" fill="#00d4aa" filter="url(#glow)"/>
+  <line x1="52" y1="90" x2="84" y2="62" stroke="#00d4aa" stroke-width="3" stroke-opacity="0.7"/>
+  <line x1="52" y1="102" x2="84" y2="130" stroke="#00d4aa" stroke-width="3" stroke-opacity="0.7"/>
+  <line x1="108" y1="62" x2="140" y2="90" stroke="#00d4aa" stroke-width="3" stroke-opacity="0.7"/>
+  <line x1="108" y1="130" x2="140" y2="102" stroke="#00d4aa" stroke-width="3" stroke-opacity="0.7"/>
+  <!-- Checkmark in center -->
+  <polyline points="80,96 90,108 112,82" fill="none" stroke="#00d4aa" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+</svg>
