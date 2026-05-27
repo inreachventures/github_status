@@ -283,7 +283,23 @@
       color: #00d4aa;
     }
     .automerge-btn.am-on:hover   { background: rgba(0,212,170,0.22); }
-    .automerge-btn:disabled      { opacity: 0.4; pointer-events: none; }
+    .automerge-btn.am-creating {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #667;
+    }
+    .automerge-btn.am-creating::after {
+      content: '';
+      display: inline-block;
+      width: 7px; height: 7px;
+      border: 1.5px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+    .automerge-btn:disabled      { opacity: 0.5; pointer-events: none; }
 
     /* ── Merge button — GitHub purple ── */
     .merge-btn {
@@ -839,8 +855,12 @@
       },
     ];
 
-    // { [repo]: { [wfName]: [run, ...] } }
+    // { [repo]: { runsByWf: { [wfName]: [run,...] }, activeBranches: Set } }
     let allRunsByRepo = {};
+    // { [repo]: { [branch]: pr | null } }
+    let prCache = {};
+    // { [repo]: string } — default branch name
+    let repoDefaultBranch = {};
     let msgState      = { mood: null, idx: 0 };
     let msgTimer      = null;
     let lastMoodEmoji = null;
@@ -914,24 +934,33 @@
           wfIds[wfName] = await findWorkflowId(repo, wfName);
         }));
 
-        // Fetch last 20 runs per workflow + active branch list in parallel
+        // Fetch runs + branches + open PRs + (once) repo default branch in parallel
         const runsByWf = {};
-        const [, branchesResp] = await Promise.all([
+        const org = getOrg();
+        const [, branchesResp, prsResp, repoResp] = await Promise.all([
           Promise.all((workflowNames || []).map(async wfName => {
             const wfId = wfIds[wfName];
             if (!wfId) { runsByWf[wfName] = []; return; }
             try {
               const d = await ghFetch(
-                `/repos/${getOrg()}/${repo}/actions/workflows/${wfId}/runs?per_page=20`
+                `/repos/${org}/${repo}/actions/workflows/${wfId}/runs?per_page=20`
               );
               runsByWf[wfName] = d.workflow_runs || [];
             } catch(e) {
               runsByWf[wfName] = [];
             }
           })),
-          ghFetch(`/repos/${getOrg()}/${repo}/branches?per_page=100`).catch(() => null),
+          ghFetch(`/repos/${org}/${repo}/branches?per_page=100`).catch(() => null),
+          ghFetch(`/repos/${org}/${repo}/pulls?state=open&per_page=100`).catch(() => null),
+          repoDefaultBranch[repo] ? Promise.resolve(null) : ghFetch(`/repos/${org}/${repo}`).catch(() => null),
         ]);
+
         const activeBranches = new Set((branchesResp || []).map(b => b.name));
+
+        prCache[repo] = {};
+        (prsResp || []).forEach(pr => { prCache[repo][pr.head.ref] = pr; });
+
+        if (repoResp?.default_branch) repoDefaultBranch[repo] = repoResp.default_branch;
 
         allRunsByRepo[repo] = { runsByWf, activeBranches };
         renderBranchCards(repo);
@@ -1034,6 +1063,8 @@
       label.title = branch;
 
       const isDefaultBranch = /^(main|master|develop|development)$/.test(branch);
+      const pr = prCache[repo]?.[branch] ?? null;
+      const autoMergeOn = pr !== null && pr.auto_merge != null;
       const btn = document.createElement('button');
       if (!isDefaultBranch && branchSt === 'success') {
         btn.className   = 'merge-btn';
@@ -1041,9 +1072,9 @@
         btn.title       = `Squash-merge ${branch}`;
         btn.addEventListener('click', () => mergeBranch(repo, branch, btn));
       } else if (!isDefaultBranch) {
-        btn.className   = 'automerge-btn am-off';
-        btn.textContent = 'AUTO ○';
-        btn.title       = 'Enable automerge';
+        btn.className   = autoMergeOn ? 'automerge-btn am-on' : 'automerge-btn am-off';
+        btn.textContent = autoMergeOn ? 'Auto Merge ✓' : 'Auto Merge';
+        btn.title       = autoMergeOn ? 'Automerge enabled — click to disable' : 'Enable automerge (creates PR if needed)';
         btn.addEventListener('click', () => toggleAutoMergeBranch(repo, branch, btn));
       }
 
@@ -1122,28 +1153,61 @@
 
     async function toggleAutoMergeBranch(repo, branch, btn) {
       btn.disabled = true;
-      try {
-        const pr = await fetchPRForBranch(repo, branch);
-        if (!pr) throw new Error('No open PR for this branch');
+      const org = getOrg();
 
-        const enabling = pr.auto_merge === null;
+      try {
+        let pr = prCache[repo]?.[branch] ?? null;
+
+        // No open PR — create one first
+        if (!pr) {
+          btn.className   = 'automerge-btn am-creating';
+          btn.textContent = 'Creating PR…';
+
+          const latestRun = Object.values(allRunsByRepo[repo]?.runsByWf || {})
+            .flatMap(runs => runs)
+            .filter(r => r.head_branch === branch)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+          const title = latestRun?.display_title || latestRun?.head_commit?.message?.split('\n')[0] || branch;
+          const base  = repoDefaultBranch[repo] || 'main';
+
+          const createRes = await fetch(`https://api.github.com/repos/${org}/${repo}/pulls`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json', Accept: 'application/vnd.github+json' },
+            body: JSON.stringify({ title, head: branch, base, body: '' }),
+          });
+          if (!createRes.ok) {
+            const body = await createRes.json().catch(() => ({}));
+            throw new Error(body.message || createRes.status);
+          }
+          pr = await createRes.json();
+          if (!prCache[repo]) prCache[repo] = {};
+          prCache[repo][branch] = pr;
+        }
+
+        // Toggle automerge on the PR
+        const enabling = pr.auto_merge == null;
         const query    = enabling
-          ? `mutation($id:ID!){enablePullRequestAutoMerge(input:{pullRequestId:$id,mergeMethod:MERGE}){pullRequest{number}}}`
+          ? `mutation($id:ID!){enablePullRequestAutoMerge(input:{pullRequestId:$id,mergeMethod:SQUASH}){pullRequest{number}}}`
           : `mutation($id:ID!){disablePullRequestAutoMerge(input:{pullRequestId:$id}){pullRequest{number}}}`;
 
-        const res  = await fetch('https://api.github.com/graphql', {
+        const gqlRes = await fetch('https://api.github.com/graphql', {
           method: 'POST',
           headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ query, variables: { id: pr.node_id } }),
         });
-        const json = await res.json();
+        const json = await gqlRes.json();
         if (json.errors?.length) throw new Error(json.errors[0].message);
 
+        // Update local cache to reflect new state
+        prCache[repo][branch] = { ...pr, auto_merge: enabling ? { enabled: true } : null };
+
         btn.className   = enabling ? 'automerge-btn am-on' : 'automerge-btn am-off';
-        btn.textContent = enabling ? 'AUTO ●' : 'AUTO ○';
-        btn.title       = enabling ? 'Automerge enabled — click to disable' : 'Click to enable automerge';
+        btn.textContent = enabling ? 'Auto Merge ✓' : 'Auto Merge';
+        btn.title       = enabling ? 'Automerge enabled — click to disable' : 'Enable automerge (creates PR if needed)';
       } catch(e) {
-        btn.title = `Error: ${e.message}`;
+        btn.className   = 'automerge-btn am-off';
+        btn.textContent = 'Auto Merge';
+        btn.title       = `Error: ${e.message}`;
       } finally {
         btn.disabled = false;
       }
@@ -1587,6 +1651,7 @@
 
       Object.keys(wfIdCache).forEach(k => delete wfIdCache[k]);
       allRunsByRepo = {};
+      prCache = {};
       closeSettings();
       rebuildCards();
       fetchAll();
