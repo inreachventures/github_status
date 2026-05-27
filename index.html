@@ -785,6 +785,7 @@
 
     // ── Open PR cache (for automerge toggles) ───────────────────────────────
     const openPRsCache = {};
+    const mergedPRs    = new Set();
 
     function getToken() { return localStorage.getItem('gh_token') || ''; }
     function getOrg()   { return localStorage.getItem('gh_org') || ''; }
@@ -831,17 +832,28 @@
           body: JSON.stringify({ merge_method: 'squash' }),
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.message || res.status);
+          const body = await res.json().catch(() => ({}));
+          // 405 = already merged / not mergeable — treat as success
+          if (res.status === 405) {
+            markMerged(pr, btn, repo);
+            return;
+          }
+          throw new Error(body.message || res.status);
         }
-        btn.className = 'merge-btn merged';
-        btn.textContent = 'Merged ✓';
-        delete openPRsCache[repo];
+        markMerged(pr, btn, repo);
       } catch(e) {
         btn.disabled = false;
         btn.textContent = 'Merge';
         btn.title = `Error: ${e.message}`;
       }
+    }
+
+    function markMerged(pr, btn, repo) {
+      mergedPRs.add(pr.number);
+      delete openPRsCache[repo];
+      btn.className   = 'merge-btn merged';
+      btn.textContent = 'Merged ✓';
+      btn.disabled    = true;
     }
 
     async function toggleAutoMerge(pr, btn, repo) {
@@ -1016,7 +1028,9 @@
         }
 
         const prByBranch = {};
-        openPRs.forEach(pr => { prByBranch[pr.head.ref] = pr; });
+        openPRs
+          .filter(pr => !mergedPRs.has(pr.number))
+          .forEach(pr => { prByBranch[pr.head.ref] = pr; });
 
         const makeRunRow = run => {
           const st  = runSt(run);
