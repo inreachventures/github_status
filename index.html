@@ -215,6 +215,33 @@
       font-style: italic;
     }
 
+    /* ── Automerge toggle ── */
+    .automerge-btn {
+      flex-shrink: 0;
+      border-radius: 5px;
+      font-size: 0.58rem;
+      font-weight: 700;
+      font-family: inherit;
+      padding: 2px 6px;
+      cursor: pointer;
+      line-height: 1.5;
+      transition: background 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+    .automerge-btn.am-off {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #445;
+    }
+    .automerge-btn.am-off:hover  { border-color: rgba(0,212,170,0.35); color: #00d4aa; }
+    .automerge-btn.am-on {
+      background: rgba(0,212,170,0.12);
+      border: 1px solid rgba(0,212,170,0.35);
+      color: #00d4aa;
+    }
+    .automerge-btn.am-on:hover   { background: rgba(0,212,170,0.22); }
+    .automerge-btn:disabled      { opacity: 0.4; pointer-events: none; }
+
     /* ── Footer ── */
     #footer {
       text-align: right;
@@ -602,16 +629,16 @@
   <div id="top-controls">
     <div id="interval-ctrl">
       <div id="interval-options">
-        <span class="iopt active" data-s="10"  onclick="setRefresh(10)">10s</span>
+        <span class="iopt"        data-s="10"  onclick="setRefresh(10)">10s</span>
         <span class="iopt"        data-s="20"  onclick="setRefresh(20)">20s</span>
         <span class="iopt"        data-s="30"  onclick="setRefresh(30)">30s</span>
         <span class="iopt"        data-s="40"  onclick="setRefresh(40)">40s</span>
         <span class="iopt"        data-s="50"  onclick="setRefresh(50)">50s</span>
-        <span class="iopt"        data-s="60"  onclick="setRefresh(60)">1m</span>
+        <span class="iopt active"  data-s="60"  onclick="setRefresh(60)">1m</span>
         <span class="iopt"        data-s="90"  onclick="setRefresh(90)">90s</span>
         <span class="iopt"        data-s="120" onclick="setRefresh(120)">2m</span>
       </div>
-      <span id="interval-trigger" onclick="togglePicker()">10s</span>
+      <span id="interval-trigger" onclick="togglePicker()">1m</span>
     </div>
     <button id="refresh-btn" onclick="fetchAll()" title="Refresh now"><span class="ri">↻</span></button>
     <button id="settings-btn" onclick="openSettings()" title="Settings">⚙</button>
@@ -675,7 +702,7 @@
 
   <script>
     let REPOS = [];
-    let refreshInterval = 10_000;
+    let refreshInterval = 60_000;
     let refreshTimer    = null;
     const MSG_ROTATE_MS = 9_000;
 
@@ -738,6 +765,9 @@
     let lastLoadedOrg = '';
     const repoWorkflows = {};
 
+    // ── Open PR cache (for automerge toggles) ───────────────────────────────
+    const openPRsCache = {};
+
     function getToken() { return localStorage.getItem('gh_token') || ''; }
     function getOrg()   { return localStorage.getItem('gh_org') || ''; }
     function getRepos() {
@@ -760,6 +790,46 @@
       const wf = data.workflows.find(w => w.name === workflowName);
       if (wf) wfIdCache[key] = wf.id;
       return wf ? wf.id : null;
+    }
+
+    async function fetchOpenPRs(repo) {
+      if (openPRsCache[repo]) return openPRsCache[repo];
+      try {
+        const data = await ghFetch(`/repos/${getOrg()}/${repo}/pulls?state=open&per_page=100`);
+        openPRsCache[repo] = data;
+        return data;
+      } catch(e) {
+        return [];
+      }
+    }
+
+    async function toggleAutoMerge(pr, btn, repo) {
+      const enabling = pr.auto_merge === null;
+      btn.disabled = true;
+
+      const query = enabling
+        ? `mutation($id:ID!){enablePullRequestAutoMerge(input:{pullRequestId:$id,mergeMethod:MERGE}){pullRequest{number}}}`
+        : `mutation($id:ID!){disablePullRequestAutoMerge(input:{pullRequestId:$id}){pullRequest{number}}}`;
+
+      try {
+        const res = await fetch('https://api.github.com/graphql', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, variables: { id: pr.node_id } }),
+        });
+        const json = await res.json();
+        if (json.errors?.length) throw new Error(json.errors[0].message);
+
+        // Optimistically update button and invalidate cache
+        pr.auto_merge = enabling ? {} : null;
+        delete openPRsCache[repo];
+        btn.className = enabling ? 'automerge-btn am-on' : 'automerge-btn am-off';
+        btn.textContent = enabling ? 'AUTO ●' : 'AUTO ○';
+      } catch(e) {
+        btn.title = `Error: ${e.message}`;
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     function runSt(run) {
@@ -889,7 +959,10 @@
           return;
         }
 
-        const data = await ghFetch(`/repos/${getOrg()}/${repo}/actions/workflows/${wfId}/runs?per_page=5`);
+        const [data, openPRs] = await Promise.all([
+          ghFetch(`/repos/${getOrg()}/${repo}/actions/workflows/${wfId}/runs?per_page=5`),
+          fetchOpenPRs(repo),
+        ]);
         const runs = data.workflow_runs;
         allRuns[repo] = runs;
         card.dataset.loaded = '1';
@@ -901,9 +974,13 @@
           return;
         }
 
+        const prByBranch = {};
+        openPRs.forEach(pr => { prByBranch[pr.head.ref] = pr; });
+
         const makeRunRow = run => {
-          const st = runSt(run);
-          const a  = document.createElement('a');
+          const st  = runSt(run);
+          const pr  = prByBranch[run.head_branch] || null;
+          const a   = document.createElement('a');
           a.className = `run-row ${st}`;
           a.href      = run.html_url;
           a.target    = '_blank';
@@ -920,6 +997,15 @@
               <span class="run-trigger">${escHtml(workflowName)} #${run.run_number} &middot; ${trigger}</span>
               <span class="run-meta">${meta}</span>
             </div>`;
+          if (pr) {
+            const isOn = pr.auto_merge !== null;
+            const btn  = document.createElement('button');
+            btn.className = isOn ? 'automerge-btn am-on' : 'automerge-btn am-off';
+            btn.textContent = isOn ? 'AUTO ●' : 'AUTO ○';
+            btn.title = isOn ? 'Automerge enabled — click to disable' : 'Click to enable automerge';
+            btn.addEventListener('click', e => { e.preventDefault(); toggleAutoMerge(pr, btn, repo); });
+            a.appendChild(btn);
+          }
           return a;
         };
 
@@ -1245,6 +1331,7 @@
       }
 
       Object.keys(wfIdCache).forEach(k => delete wfIdCache[k]);
+      Object.keys(openPRsCache).forEach(k => delete openPRsCache[k]);
       allRuns = {};
       closeSettings();
       rebuildCards();
