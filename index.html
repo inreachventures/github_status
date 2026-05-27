@@ -297,7 +297,7 @@
     .pr-builds-label {
       font-size: 0.57rem;
       font-weight: 700;
-      color: #3a3a5a;
+      color: #667;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       margin-bottom: 3px;
@@ -1002,7 +1002,7 @@
       if (prCache[repo]) return prCache[repo];
       try {
         const data = await ghFetch(
-          `/repos/${getOrg()}/${repo}/pulls?state=all&per_page=50&sort=updated&direction=desc`
+          `/repos/${getOrg()}/${repo}/pulls?state=all&per_page=100&sort=updated&direction=desc`
         );
         prCache[repo] = data;
         return data;
@@ -1085,10 +1085,11 @@
         allPRData[repo] = entries;
 
         // Fetch runs not associated with any PR (any branch, not just main)
-        // Exclude: runs on an open PR's branch (already shown in PR rows)
-        //          runs whose SHA matches a merged PR's merge commit (already shown as "Main build")
-        const prBranchRefs = new Set(prs.filter(pr => !pr.merged_at).map(pr => pr.head.ref));
-        const mergedSHAs   = new Set(prs.filter(pr => pr.merge_commit_sha).map(pr => pr.merge_commit_sha));
+        // Use the full cached PR list (100 entries, all states) to build exclusion sets —
+        // much wider coverage than the 48h-filtered `prs` subset.
+        const allKnownPRs  = await fetchRepoPRs(repo);
+        const prBranchRefs = new Set(allKnownPRs.map(pr => pr.head.ref));
+        const mergedSHAs   = new Set(allKnownPRs.filter(pr => pr.merge_commit_sha).map(pr => pr.merge_commit_sha));
         const directMap    = {};
         await Promise.all((workflowNames || []).map(async wfName => {
           const wfId = wfIds[wfName];
@@ -1157,7 +1158,7 @@
         sep.className = 'no-pr-sep';
         sep.innerHTML = '<span>no PR</span>';
         card.appendChild(sep);
-        flatDirect.forEach(({ run, wfName }) => card.appendChild(buildRunLine(run, wfName)));
+        flatDirect.forEach(({ run, wfName }) => card.appendChild(buildDirectRunLine(run, wfName)));
       }
     }
 
@@ -1359,6 +1360,33 @@
       const info = document.createElement('span');
       info.className = 'run-line-info';
       info.innerHTML = `<span class="run-line-wf">${escHtml(wfName)}</span><span class="run-line-meta">${escHtml(meta)}</span>`;
+
+      a.appendChild(dot);
+      a.appendChild(info);
+      return a;
+    }
+
+    // Like buildRunLine but for the "no PR" section: show branch + commit title instead of workflow name
+    function buildDirectRunLine(run, wfName) {
+      const st  = runSt(run);
+      const a   = document.createElement('a');
+      a.className = `run-line ${st}`;
+      a.href      = run.html_url;
+      a.target    = '_blank';
+      a.rel       = 'noopener';
+
+      const dot = document.createElement('span');
+      dot.className = `dot ${st}`;
+
+      const dur     = formatDuration(run);
+      const branch  = run.head_branch || '';
+      const title   = run.display_title || run.head_commit?.message?.split('\n')[0] || '';
+      const numTime = `${wfName} #${run.run_number}${dur ? ` · ${dur}` : ''} · ${timeAgo(run.created_at)}`;
+      const meta    = title ? `${title} · ${numTime}` : numTime;
+
+      const info = document.createElement('span');
+      info.className = 'run-line-info';
+      info.innerHTML = `<span class="run-line-wf">${escHtml(branch)}</span><span class="run-line-meta">${escHtml(meta)}</span>`;
 
       a.appendChild(dot);
       a.appendChild(info);
