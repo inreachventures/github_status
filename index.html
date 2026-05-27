@@ -1119,16 +1119,13 @@
         return;
       }
 
-      const sortOrder = e => {
-        if (e.pr.merged_at) return 4;
-        return { success: 0, running: 1, failure: 2, other: 3 }[prStatus(e)] ?? 3;
-      };
+      // Open PRs first (by updated_at desc), then merged PRs (by merged_at desc)
       const sorted = [...entries].sort((a, b) => {
-        const diff = sortOrder(a) - sortOrder(b);
-        if (diff !== 0) return diff;
-        if (a.pr.merged_at && b.pr.merged_at)
-          return new Date(b.pr.merged_at) - new Date(a.pr.merged_at);
-        return new Date(b.pr.updated_at) - new Date(a.pr.updated_at);
+        const aMerged = !!a.pr.merged_at, bMerged = !!b.pr.merged_at;
+        if (aMerged !== bMerged) return aMerged ? 1 : -1;
+        const aTime = new Date(a.pr.merged_at || a.pr.updated_at);
+        const bTime = new Date(b.pr.merged_at || b.pr.updated_at);
+        return bTime - aTime;
       });
 
       sorted.forEach(entry => card.appendChild(buildPRRow(repo, entry)));
