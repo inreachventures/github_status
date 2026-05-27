@@ -1071,12 +1071,11 @@
 
         allPRData[repo] = entries;
 
-        // Fetch runs not associated with any PR (any branch, not just main)
-        // Use the full cached PR list (100 entries, all states) to build exclusion sets —
-        // much wider coverage than the 48h-filtered `prs` subset.
-        const allKnownPRs  = await fetchRepoPRs(repo);
-        const prBranchRefs = new Set(allKnownPRs.map(pr => pr.head.ref));
-        const mergedSHAs   = new Set(allKnownPRs.filter(pr => pr.merge_commit_sha).map(pr => pr.merge_commit_sha));
+        // Exclude only branches/SHAs we are actually displaying in the PR section.
+        // Using allKnownPRs was too broad: draft PRs and PRs >7d old would make runs
+        // invisible (excluded from direct runs AND not shown in any PR row).
+        const prBranchRefs = new Set(prs.map(pr => pr.head.ref));
+        const mergedSHAs   = new Set(prs.filter(pr => pr.merge_commit_sha).map(pr => pr.merge_commit_sha));
         const directMap    = {};
         await Promise.all((workflowNames || []).map(async wfName => {
           const wfId = wfIds[wfName];
