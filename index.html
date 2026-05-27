@@ -966,13 +966,6 @@
         byBranch[b].push(item);
       });
 
-      // Filter out branches that no longer exist on GitHub (merged/deleted)
-      if (activeBranches && activeBranches.size > 0) {
-        Object.keys(byBranch).forEach(b => {
-          if (!activeBranches.has(b)) delete byBranch[b];
-        });
-      }
-
       // Sort by most recent run desc, cap at 5 branches
       const branches = Object.entries(byBranch)
         .sort((a, b) => {
