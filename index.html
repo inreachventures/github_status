@@ -1033,7 +1033,7 @@
 
         // Fetch PR list
         const allPRs  = await fetchRepoPRs(repo);
-        const cutoff  = Date.now() - 48 * 3600 * 1000;
+        const cutoff  = Date.now() - 7 * 24 * 3600 * 1000;
         const prs     = allPRs.filter(pr =>
           (!pr.draft && pr.state === 'open') ||
           (pr.merged_at && new Date(pr.merged_at).getTime() > cutoff)
@@ -1128,7 +1128,19 @@
         return bTime - aTime;
       });
 
-      sorted.forEach(entry => card.appendChild(buildPRRow(repo, entry)));
+      const recentCutoff = Date.now() - 48 * 3600 * 1000;
+      const recent = sorted.filter(e => !e.pr.merged_at || new Date(e.pr.merged_at).getTime() > recentCutoff);
+      const older  = sorted.filter(e =>  e.pr.merged_at && new Date(e.pr.merged_at).getTime() <= recentCutoff);
+
+      recent.forEach(entry => card.appendChild(buildPRRow(repo, entry)));
+
+      if (older.length) {
+        const sep = document.createElement('div');
+        sep.className = 'no-pr-sep';
+        sep.innerHTML = '<span>older</span>';
+        card.appendChild(sep);
+        older.forEach(entry => card.appendChild(buildPRRow(repo, entry)));
+      }
 
       // Direct main-branch runs (no associated PR)
       const directMap  = allDirectRuns[repo] || {};
