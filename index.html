@@ -1343,12 +1343,13 @@
       const dot = document.createElement('span');
       dot.className = `dot ${st}`;
 
-      const dur  = formatDuration(run);
-      const meta = `#${run.run_number}${dur ? ` · ${dur}` : ''} · ${timeAgo(run.created_at)}`;
+      const dur   = formatDuration(run);
+      const title = run.display_title || run.head_commit?.message?.split('\n')[0] || wfName;
+      const meta  = `${wfName} #${run.run_number}${dur ? ` · ${dur}` : ''} · ${timeAgo(run.created_at)}`;
 
       const info = document.createElement('span');
       info.className = 'run-line-info';
-      info.innerHTML = `<span class="run-line-wf">${escHtml(wfName)}</span><span class="run-line-meta">${escHtml(meta)}</span>`;
+      info.innerHTML = `<span class="run-line-wf">${escHtml(title)}</span><span class="run-line-meta">${escHtml(meta)}</span>`;
 
       a.appendChild(dot);
       a.appendChild(info);
