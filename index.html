@@ -909,7 +909,7 @@
             if (!wfId) { runsByWf[wfName] = []; return; }
             try {
               const d = await ghFetch(
-                `/repos/${org}/${repo}/actions/workflows/${wfId}/runs?per_page=20`
+                `/repos/${org}/${repo}/actions/workflows/${wfId}/runs?per_page=100`
               );
               runsByWf[wfName] = d.workflow_runs || [];
             } catch(e) {
@@ -954,9 +954,13 @@
         return;
       }
 
+      // Only keep runs from the last 7 days
+      const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+      const weekItems = allItems.filter(i => new Date(i.run.created_at).getTime() > weekAgo);
+
       // Group by branch
       const byBranch = {};
-      allItems.forEach(item => {
+      weekItems.forEach(item => {
         const b = item.run.head_branch || '(unknown)';
         if (!byBranch[b]) byBranch[b] = [];
         byBranch[b].push(item);
@@ -969,31 +973,35 @@
         });
       }
 
-      // Sort branches by most recent run desc
-      const branches = Object.entries(byBranch).sort((a, b) => {
-        const aT = Math.max(...a[1].map(i => new Date(i.run.created_at).getTime()));
-        const bT = Math.max(...b[1].map(i => new Date(i.run.created_at).getTime()));
-        return bT - aT;
-      });
+      // Sort by most recent run desc, cap at 5 branches
+      const branches = Object.entries(byBranch)
+        .sort((a, b) => {
+          const aT = Math.max(...a[1].map(i => new Date(i.run.created_at).getTime()));
+          const bT = Math.max(...b[1].map(i => new Date(i.run.created_at).getTime()));
+          return bT - aT;
+        })
+        .slice(0, 5);
 
-      // Split into recent (≤7 days) and older
-      const cutoff = Date.now() - 7 * 24 * 3600 * 1000;
-      const recent = branches.filter(([, items]) =>
-        items.some(i => new Date(i.run.created_at).getTime() > cutoff)
+      // Split: today vs older (within the week)
+      const todayBranches = branches.filter(([, items]) =>
+        items.some(i => isToday(i.run.created_at))
       );
-      const older = branches.filter(([, items]) =>
-        items.every(i => new Date(i.run.created_at).getTime() <= cutoff)
+      const olderBranches = branches.filter(([, items]) =>
+        !items.some(i => isToday(i.run.created_at))
       );
 
-      recent.forEach(([branch, items]) => card.appendChild(buildBranchGroup(repo, branch, items)));
-
-      if (older.length) {
+      const appendSep = label => {
         const sep = document.createElement('div');
         sep.className = 'section-sep';
-        sep.innerHTML = '<span>older</span>';
+        sep.innerHTML = `<span>${label}</span>`;
         card.appendChild(sep);
-        older.forEach(([branch, items]) => card.appendChild(buildBranchGroup(repo, branch, items)));
-      }
+      };
+
+      const hasBoth = todayBranches.length && olderBranches.length;
+      if (hasBoth) appendSep('today');
+      todayBranches.forEach(([branch, items]) => card.appendChild(buildBranchGroup(repo, branch, items)));
+      if (olderBranches.length) appendSep('older');
+      olderBranches.forEach(([branch, items]) => card.appendChild(buildBranchGroup(repo, branch, items)));
     }
 
     function buildBranchGroup(repo, branch, items) {
