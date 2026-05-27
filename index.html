@@ -241,6 +241,24 @@
     }
     .automerge-btn.am-on:hover   { background: rgba(0,212,170,0.22); }
     .automerge-btn:disabled      { opacity: 0.4; pointer-events: none; }
+    .merge-btn {
+      flex-shrink: 0;
+      border-radius: 5px;
+      font-size: 0.58rem;
+      font-weight: 700;
+      font-family: inherit;
+      padding: 2px 6px;
+      cursor: pointer;
+      line-height: 1.5;
+      white-space: nowrap;
+      background: rgba(0,212,170,0.12);
+      border: 1px solid rgba(0,212,170,0.35);
+      color: #00d4aa;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .merge-btn:hover    { background: rgba(0,212,170,0.25); }
+    .merge-btn:disabled { opacity: 0.4; pointer-events: none; }
+    .merge-btn.merged   { background: transparent; border-color: rgba(255,255,255,0.1); color: #3a7a6a; cursor: default; }
 
     /* ── Footer ── */
     #footer {
@@ -803,6 +821,29 @@
       }
     }
 
+    async function mergePR(pr, btn, repo) {
+      btn.disabled = true;
+      btn.textContent = '…';
+      try {
+        const res = await fetch(`https://api.github.com/repos/${getOrg()}/${repo}/pulls/${pr.number}/merge`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json', Accept: 'application/vnd.github+json' },
+          body: JSON.stringify({ merge_method: 'squash' }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || res.status);
+        }
+        btn.className = 'merge-btn merged';
+        btn.textContent = 'Merged ✓';
+        delete openPRsCache[repo];
+      } catch(e) {
+        btn.disabled = false;
+        btn.textContent = 'Merge';
+        btn.title = `Error: ${e.message}`;
+      }
+    }
+
     async function toggleAutoMerge(pr, btn, repo) {
       const enabling = pr.auto_merge === null;
       btn.disabled = true;
@@ -998,12 +1039,19 @@
               <span class="run-meta">${meta}</span>
             </div>`;
           if (pr) {
-            const isOn = pr.auto_merge !== null;
-            const btn  = document.createElement('button');
-            btn.className = isOn ? 'automerge-btn am-on' : 'automerge-btn am-off';
-            btn.textContent = isOn ? 'AUTO ●' : 'AUTO ○';
-            btn.title = isOn ? 'Automerge enabled — click to disable' : 'Click to enable automerge';
-            btn.addEventListener('click', e => { e.preventDefault(); toggleAutoMerge(pr, btn, repo); });
+            const btn = document.createElement('button');
+            if (run.conclusion === 'success') {
+              btn.className   = 'merge-btn';
+              btn.textContent = 'Merge';
+              btn.title       = `Squash and merge PR #${pr.number}`;
+              btn.addEventListener('click', e => { e.preventDefault(); mergePR(pr, btn, repo); });
+            } else {
+              const isOn = pr.auto_merge !== null;
+              btn.className   = isOn ? 'automerge-btn am-on' : 'automerge-btn am-off';
+              btn.textContent = isOn ? 'AUTO ●' : 'AUTO ○';
+              btn.title       = isOn ? 'Automerge enabled — click to disable' : 'Click to enable automerge';
+              btn.addEventListener('click', e => { e.preventDefault(); toggleAutoMerge(pr, btn, repo); });
+            }
             a.appendChild(btn);
           }
           return a;
