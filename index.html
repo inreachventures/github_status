@@ -1045,7 +1045,9 @@
       row.appendChild(timeEl);
 
       const isDefaultBranch = /^(main|master|develop|development)$/.test(branch);
-      if (!isDefaultBranch) {
+      const activeBranches  = allRunsByRepo[repo]?.activeBranches;
+      const branchExists    = !activeBranches || activeBranches.size === 0 || activeBranches.has(branch);
+      if (!isDefaultBranch && branchExists) {
         const autoMergeOn = pr !== null && pr.auto_merge != null;
         const btn = document.createElement('button');
         if (branchSt === 'success') {
