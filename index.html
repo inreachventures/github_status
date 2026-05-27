@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GitHub PR Status</title>
+  <title>GitHub CI Status</title>
   <link rel="manifest" href="manifest.json">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -138,199 +138,114 @@
       margin-bottom: 10px;
     }
 
-    /* ── PR rows ── */
-    .pr-row {
-      border-left: 3px solid transparent;
-      border-radius: 8px;
-      margin-bottom: 3px;
-      transition: border-color 0.3s;
-    }
-    .pr-row.success { border-left-color: #00d4aa; }
-    .pr-row.failure { border-left-color: #ff4757; }
-    .pr-row.running { border-left-color: #ffd43b; }
-    .pr-row.other   { border-left-color: #3a3a4a; }
-    .pr-row.merged  { border-left-color: rgba(130,80,223,0.5); opacity: 0.75; }
+    /* ── Branch groups ── */
+    .branch-group { margin-bottom: 6px; }
+    .branch-group:last-child { margin-bottom: 0; }
 
-    .pr-row-hdr {
+    .branch-hdr {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 6px;
-      padding: 6px 7px;
+      padding: 3px 7px 3px 4px;
+      margin-bottom: 1px;
     }
-    .pr-toggle {
-      background: none;
-      border: none;
-      color: #3a3a5a;
-      cursor: pointer;
-      font-size: 0.55rem;
-      padding: 3px 1px 0;
-      flex-shrink: 0;
-      line-height: 1;
-      transition: color 0.12s;
-    }
-    .pr-toggle:hover { color: #00d4aa; }
-
-    .pr-info {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-    .pr-title {
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: #d0d0d0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-decoration: none;
-    }
-    .pr-title:hover { color: #8ab8ff; text-decoration: underline; }
-    .pr-meta-line {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-      align-items: center;
-    }
-    .wf-dots {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .wf-section-label {
-      font-size: 0.58rem;
-      color: #3a3a5a;
-    }
-    .wf-dot-item {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      cursor: default;
-    }
-    .wf-dot-label {
-      font-size: 0.57rem;
-      color: #445;
-      max-width: 54px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* ── Dots ── */
-    .dot {
+    .branch-dot {
       width: 7px;
       height: 7px;
       border-radius: 50%;
       flex-shrink: 0;
     }
-    .dot.success { background: #00d4aa; box-shadow: 0 0 5px rgba(0,212,170,0.5); }
-    .dot.failure { background: #ff4757; box-shadow: 0 0 7px rgba(255,71,87,0.6); }
-    .dot.running { background: #ffd43b; animation: pulse 1.4s ease-in-out infinite; }
-    .dot.other   { background: #3a3a4a; }
+    .branch-dot.success { background: #00d4aa; box-shadow: 0 0 5px rgba(0,212,170,0.5); }
+    .branch-dot.failure { background: #ff4757; box-shadow: 0 0 7px rgba(255,71,87,0.6); }
+    .branch-dot.running { background: #ffd43b; animation: pulse 1.4s ease-in-out infinite; }
+    .branch-dot.other   { background: #3a3a4a; }
 
-    /* ── Merged / Draft badges ── */
-    .merged-badge {
-      font-size: 0.58rem;
-      font-weight: 700;
-      color: #7a5ea0;
-      flex-shrink: 0;
-      padding: 2px 6px;
-      border: 1px solid rgba(130,80,223,0.2);
-      border-radius: 5px;
-      background: rgba(130,80,223,0.08);
+    .branch-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #889;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
-/* ── No-PR separator ── */
-    .no-pr-sep {
+
+    /* ── Run lines ── */
+    .run-line {
       display: flex;
       align-items: center;
       gap: 7px;
-      margin: 8px 2px 4px;
+      padding: 4px 7px;
+      border-radius: 6px;
+      text-decoration: none;
+      color: inherit;
+      margin-bottom: 1px;
+      border-left: 2px solid transparent;
+      transition: background 0.12s;
+    }
+    .run-line:hover { background: rgba(255,255,255,0.04); }
+    .run-line.success { border-left-color: #00d4aa; }
+    .run-line.failure { border-left-color: #ff4757; }
+    .run-line.running { border-left-color: #ffd43b; }
+    .run-line.other   { border-left-color: #3a3a4a; }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot.success { background: #00d4aa; box-shadow: 0 0 4px rgba(0,212,170,0.5); }
+    .dot.failure { background: #ff4757; box-shadow: 0 0 6px rgba(255,71,87,0.6); }
+    .dot.running { background: #ffd43b; animation: pulse 1.4s ease-in-out infinite; }
+    .dot.other   { background: #3a3a4a; }
+
+    .run-line-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+      flex: 1;
+    }
+    .run-line-title {
+      font-size: 0.70rem;
+      font-weight: 500;
+      color: #ccc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .run-line-meta {
+      font-size: 0.60rem;
+      color: #445;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Section separator ── */
+    .section-sep {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 8px 2px 5px;
       color: #2a2f3a;
       font-size: 0.55rem;
       font-weight: 600;
       letter-spacing: 0.07em;
       text-transform: uppercase;
     }
-    .no-pr-sep::before, .no-pr-sep::after {
+    .section-sep::before, .section-sep::after {
       content: '';
       flex: 1;
       height: 1px;
       background: rgba(255,255,255,0.04);
     }
 
-    /* ── Expanded body ── */
-    .pr-row-body {
-      padding: 0 7px 8px 22px;
-    }
-    .pr-author-line {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-bottom: 8px;
-      font-size: 0.63rem;
-      color: #445;
-    }
-    .pr-avatar {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .pr-author-name { color: #889; }
-
-    .pr-builds-section { margin-bottom: 6px; }
-    .pr-builds-label {
-      font-size: 0.57rem;
-      font-weight: 700;
-      color: #667;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 3px;
-      padding-left: 2px;
-    }
-
-    /* ── Run lines (expanded) ── */
-    .run-line {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 3px 4px;
-      border-radius: 6px;
-      text-decoration: none;
-      color: inherit;
-      margin-bottom: 1px;
-      transition: background 0.12s;
-    }
-    a.run-line:hover { background: rgba(255,255,255,0.04); }
-    .run-line-info {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-      flex: 1;
-    }
-    .run-line-wf {
-      font-size: 0.65rem;
-      color: #667;
-      flex-shrink: 0;
-      max-width: 90px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .run-line-meta {
-      font-size: 0.6rem;
-      color: #3a3a5a;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
     /* ── Skeleton ── */
     .skeleton {
-      height: 54px;
+      height: 42px;
       border-radius: 8px;
       background: linear-gradient(90deg,
         rgba(255,255,255,0.03) 25%,
@@ -341,12 +256,7 @@
       margin-bottom: 2px;
     }
     .err { color: #ff6b6b; font-size: 0.72rem; padding: 4px 2px; }
-    .no-prs-msg {
-      font-size: 0.68rem;
-      color: #445;
-      padding: 4px 7px 2px;
-      font-style: italic;
-    }
+    .no-runs-msg { font-size: 0.68rem; color: #445; padding: 4px 7px 2px; font-style: italic; }
 
     /* ── Automerge toggle ── */
     .automerge-btn {
@@ -393,6 +303,7 @@
     }
     .merge-btn:hover    { background: rgba(130,80,223,0.28); }
     .merge-btn:disabled { opacity: 0.4; pointer-events: none; }
+    .merge-btn.merged   { background: transparent; border-color: rgba(130,80,223,0.15); color: #7a5ea0; cursor: default; }
 
     /* ── Footer ── */
     #footer {
@@ -698,7 +609,7 @@
     .ritem-empty   { font-size: 0.65rem; color: #334; padding: 6px 2px; }
     .ritem-err     { font-size: 0.65rem; color: #ff6b6b; padding: 6px 2px; }
 
-    /* ── Monitoring pills (new grouped style) ── */
+    /* ── Monitoring pills ── */
     #repos-list { display: flex; flex-direction: column; gap: 5px; }
     .monitoring-pill {
       display: flex;
@@ -859,7 +770,7 @@
   </div>
 
   <div id="mood-header">
-    <span id="stats-pill">Fetching PRs…</span>
+    <span id="stats-pill">Fetching builds…</span>
     <span id="mood-emoji">⏳</span>
     <span id="mood-label">Loading…</span>
   </div>
@@ -928,22 +839,19 @@
       },
     ];
 
-    // { [repo]: [{ pr, branchRuns: {wfName: run|null}, masterRuns: {wfName: run|null}, expanded: bool }] }
-    let allPRData    = {};
-    // { [repo]: { wfName: [run,...] } } — main-branch runs not from any PR merge
-    let allDirectRuns = {};
-    let msgState = { mood: null, idx: 0 };
-    let msgTimer = null;
+    // { [repo]: { [wfName]: [run, ...] } }
+    let allRunsByRepo = {};
+    let msgState      = { mood: null, idx: 0 };
+    let msgTimer      = null;
     let lastMoodEmoji = null;
-    const wfIdCache = {};
-    const prCache   = {};  // { [repo]: [PR objects] } — cleared each fetchAll cycle
+    const wfIdCache   = {};
 
-    // ── Repo browser state ──────────────────────────────────────────────────
+    // ── Repo browser state ───────────────────────────────────────────────────
     let allRepos = [];
     let lastLoadedOrg = '';
     const repoWorkflows = {};
 
-    // ── Storage helpers ─────────────────────────────────────────────────────
+    // ── Storage helpers ──────────────────────────────────────────────────────
     function getToken() { return localStorage.getItem('gh_token') || ''; }
     function getOrg()   { return localStorage.getItem('gh_org') || ''; }
 
@@ -967,7 +875,7 @@
       return [];
     }
 
-    // ── GitHub API ──────────────────────────────────────────────────────────
+    // ── GitHub API ───────────────────────────────────────────────────────────
     async function ghFetch(path) {
       const res = await fetch(`https://api.github.com${path}`, {
         headers: { Authorization: `Bearer ${getToken()}`, Accept: 'application/vnd.github+json' }
@@ -985,115 +893,48 @@
       return wf ? wf.id : null;
     }
 
-    async function fetchRepoPRs(repo) {
-      if (prCache[repo]) return prCache[repo];
-      try {
-        const data = await ghFetch(
-          `/repos/${getOrg()}/${repo}/pulls?state=all&per_page=100&sort=updated&direction=desc`
-        );
-        prCache[repo] = data;
-        return data;
-      } catch(e) {
-        return [];
-      }
+    // Lazy PR fetch for a specific branch — only called when user clicks Merge/AUTO
+    async function fetchPRForBranch(repo, branch) {
+      const org = getOrg();
+      const data = await ghFetch(
+        `/repos/${org}/${repo}/pulls?state=open&head=${encodeURIComponent(org)}:${encodeURIComponent(branch)}&per_page=1`
+      );
+      return data[0] || null;
     }
 
-    // ── PR status ────────────────────────────────────────────────────────────
-    function prStatus(entry) {
-      const vals = Object.values(entry.branchRuns);
-      if (!vals.length) return 'other';
-      const sts = vals.map(r => r ? runSt(r) : 'other');
-      if (sts.every(s => s === 'success')) return 'success';
-      if (sts.some(s => s === 'running'))  return 'running';
-      if (sts.some(s => s === 'failure'))  return 'failure';
-      return 'other';
-    }
-
-    function masterStatus(entry) {
-      const vals = Object.values(entry.masterRuns);
-      if (!vals.length || vals.every(r => r === null)) return 'other';
-      const sts = vals.map(r => r ? runSt(r) : 'other');
-      if (sts.every(s => s === 'success')) return 'success';
-      if (sts.some(s => s === 'running'))  return 'running';
-      if (sts.some(s => s === 'failure'))  return 'failure';
-      return 'other';
-    }
-
-    // ── Fetch PRs + runs for a repo ─────────────────────────────────────────
-    async function fetchPRsForRepo({ name: repo, workflows: workflowNames }) {
+    // ── Fetch runs for a repo ────────────────────────────────────────────────
+    async function fetchRunsForRepo({ name: repo, workflows: workflowNames }) {
       const card = document.getElementById(`card-${repo}`);
       if (!card) return;
 
       try {
-        // Resolve all workflow IDs in parallel
+        // Resolve workflow IDs
         const wfIds = {};
         await Promise.all((workflowNames || []).map(async wfName => {
           wfIds[wfName] = await findWorkflowId(repo, wfName);
         }));
 
-        // Fetch PR list
-        const allPRs  = await fetchRepoPRs(repo);
-        const cutoff  = Date.now() - 7 * 24 * 3600 * 1000;
-        const prs     = allPRs.filter(pr =>
-          (!pr.draft && pr.state === 'open') ||
-          (pr.merged_at && new Date(pr.merged_at).getTime() > cutoff)
-        );
-
-        // Preserve expanded state from previous render
-        const prevExpanded = {};
-        (allPRData[repo] || []).forEach(e => { prevExpanded[e.pr.number] = e.expanded; });
-
-        // Fetch branch runs + master runs per PR (all in parallel)
-        const entries = await Promise.all(prs.map(async pr => {
-          const branchRuns = {};
-          const masterRuns = {};
-
-          await Promise.all((workflowNames || []).map(async wfName => {
+        // Fetch last 20 runs per workflow + active branch list in parallel
+        const runsByWf = {};
+        const [, branchesResp] = await Promise.all([
+          Promise.all((workflowNames || []).map(async wfName => {
             const wfId = wfIds[wfName];
-            if (!wfId) { branchRuns[wfName] = null; masterRuns[wfName] = null; return; }
+            if (!wfId) { runsByWf[wfName] = []; return; }
+            try {
+              const d = await ghFetch(
+                `/repos/${getOrg()}/${repo}/actions/workflows/${wfId}/runs?per_page=20`
+              );
+              runsByWf[wfName] = d.workflow_runs || [];
+            } catch(e) {
+              runsByWf[wfName] = [];
+            }
+          })),
+          ghFetch(`/repos/${getOrg()}/${repo}/branches?per_page=100`).catch(() => null),
+        ]);
+        const activeBranches = new Set((branchesResp || []).map(b => b.name));
 
-            const branchRef = encodeURIComponent(pr.head.ref);
-            const [branchData, masterData] = await Promise.all([
-              ghFetch(`/repos/${getOrg()}/${repo}/actions/workflows/${wfId}/runs?branch=${branchRef}&per_page=1`)
-                .catch(() => null),
-              pr.merged_at && pr.merge_commit_sha
-                ? ghFetch(`/repos/${getOrg()}/${repo}/actions/workflows/${wfId}/runs?head_sha=${pr.merge_commit_sha}&per_page=1`)
-                    .catch(() => null)
-                : Promise.resolve(null),
-            ]);
-
-            branchRuns[wfName] = branchData?.workflow_runs?.[0] || null;
-            masterRuns[wfName] = masterData?.workflow_runs?.[0] || null;
-          }));
-
-          return { pr, branchRuns, masterRuns, expanded: prevExpanded[pr.number] || false };
-        }));
-
-        allPRData[repo] = entries;
-
-        // Exclude only branches/SHAs we are actually displaying in the PR section.
-        // Using allKnownPRs was too broad: draft PRs and PRs >7d old would make runs
-        // invisible (excluded from direct runs AND not shown in any PR row).
-        const prBranchRefs = new Set(prs.map(pr => pr.head.ref));
-        const mergedSHAs   = new Set(prs.filter(pr => pr.merge_commit_sha).map(pr => pr.merge_commit_sha));
-        const directMap    = {};
-        await Promise.all((workflowNames || []).map(async wfName => {
-          const wfId = wfIds[wfName];
-          if (!wfId) { directMap[wfName] = []; return; }
-          try {
-            const d = await ghFetch(
-              `/repos/${getOrg()}/${repo}/actions/workflows/${wfId}/runs?per_page=10`
-            );
-            directMap[wfName] = (d.workflow_runs || []).filter(r =>
-              !prBranchRefs.has(r.head_branch) && !mergedSHAs.has(r.head_sha)
-            );
-          } catch(e) {
-            directMap[wfName] = [];
-          }
-        }));
-        allDirectRuns[repo] = directMap;
-
-        renderPRCards(repo);
+        allRunsByRepo[repo] = { runsByWf, activeBranches };
+        renderBranchCards(repo);
       } catch(e) {
         const sub = card.querySelector('.card-subtitle');
         while (sub && sub.nextSibling) sub.nextSibling.remove();
@@ -1101,239 +942,124 @@
       }
     }
 
-    // ── Render PR cards ──────────────────────────────────────────────────────
-    function renderPRCards(repo) {
+    // ── Render: group runs by branch ─────────────────────────────────────────
+    function renderBranchCards(repo) {
       const card = document.getElementById(`card-${repo}`);
       if (!card) return;
 
       const sub = card.querySelector('.card-subtitle');
       while (sub && sub.nextSibling) sub.nextSibling.remove();
 
-      const entries = allPRData[repo] || [];
-      if (!entries.length) {
-        const msg = document.createElement('div');
-        msg.className = 'no-prs-msg';
-        msg.textContent = 'No open PRs';
-        card.appendChild(msg);
+      const { runsByWf = {}, activeBranches } = allRunsByRepo[repo] || {};
+      const allItems = Object.entries(runsByWf)
+        .flatMap(([wfName, runs]) => runs.map(r => ({ run: r, wfName })));
+
+      if (!allItems.length) {
+        card.insertAdjacentHTML('beforeend', '<div class="no-runs-msg">No runs found</div>');
         return;
       }
 
-      // Open PRs first (by updated_at desc), then merged PRs (by merged_at desc)
-      const sorted = [...entries].sort((a, b) => {
-        const aMerged = !!a.pr.merged_at, bMerged = !!b.pr.merged_at;
-        if (aMerged !== bMerged) return aMerged ? 1 : -1;
-        const aTime = new Date(a.pr.merged_at || a.pr.updated_at);
-        const bTime = new Date(b.pr.merged_at || b.pr.updated_at);
-        return bTime - aTime;
+      // Group by branch
+      const byBranch = {};
+      allItems.forEach(item => {
+        const b = item.run.head_branch || '(unknown)';
+        if (!byBranch[b]) byBranch[b] = [];
+        byBranch[b].push(item);
       });
 
-      const recentCutoff = Date.now() - 48 * 3600 * 1000;
-      const recent = sorted.filter(e => !e.pr.merged_at || new Date(e.pr.merged_at).getTime() > recentCutoff);
-      const older  = sorted.filter(e =>  e.pr.merged_at && new Date(e.pr.merged_at).getTime() <= recentCutoff);
+      // Filter out branches that no longer exist on GitHub (merged/deleted)
+      if (activeBranches && activeBranches.size > 0) {
+        Object.keys(byBranch).forEach(b => {
+          if (!activeBranches.has(b)) delete byBranch[b];
+        });
+      }
 
-      recent.forEach(entry => card.appendChild(buildPRRow(repo, entry)));
+      // Sort branches by most recent run desc
+      const branches = Object.entries(byBranch).sort((a, b) => {
+        const aT = Math.max(...a[1].map(i => new Date(i.run.created_at).getTime()));
+        const bT = Math.max(...b[1].map(i => new Date(i.run.created_at).getTime()));
+        return bT - aT;
+      });
+
+      // Split into recent (≤7 days) and older
+      const cutoff = Date.now() - 7 * 24 * 3600 * 1000;
+      const recent = branches.filter(([, items]) =>
+        items.some(i => new Date(i.run.created_at).getTime() > cutoff)
+      );
+      const older = branches.filter(([, items]) =>
+        items.every(i => new Date(i.run.created_at).getTime() <= cutoff)
+      );
+
+      recent.forEach(([branch, items]) => card.appendChild(buildBranchGroup(repo, branch, items)));
 
       if (older.length) {
         const sep = document.createElement('div');
-        sep.className = 'no-pr-sep';
+        sep.className = 'section-sep';
         sep.innerHTML = '<span>older</span>';
         card.appendChild(sep);
-        older.forEach(entry => card.appendChild(buildPRRow(repo, entry)));
-      }
-
-      // Direct main-branch runs (no associated PR)
-      const directMap  = allDirectRuns[repo] || {};
-      const flatDirect = Object.entries(directMap)
-        .flatMap(([wfName, runs]) => runs.map(r => ({ run: r, wfName })))
-        .sort((a, b) => new Date(b.run.created_at) - new Date(a.run.created_at));
-
-      if (flatDirect.length) {
-        const sep = document.createElement('div');
-        sep.className = 'no-pr-sep';
-        sep.innerHTML = '<span>no PR</span>';
-        card.appendChild(sep);
-        flatDirect.forEach(({ run, wfName }) => card.appendChild(buildDirectRunLine(run, wfName)));
+        older.forEach(([branch, items]) => card.appendChild(buildBranchGroup(repo, branch, items)));
       }
     }
 
-    function buildPRRow(repo, entry) {
-      const { pr, branchRuns, masterRuns } = entry;
-      const isMerged = !!pr.merged_at;
-      const st       = isMerged ? 'merged' : prStatus(entry);
-      const wfNames  = Object.keys(branchRuns);
+    function buildBranchGroup(repo, branch, items) {
+      // Sort runs newest-first
+      items.sort((a, b) => new Date(b.run.created_at) - new Date(a.run.created_at));
 
-      const row  = document.createElement('div');
-      row.className = `pr-row ${st}`;
-
-      // ── Header ──
-      const hdr = document.createElement('div');
-      hdr.className = 'pr-row-hdr';
-
-      const toggle = document.createElement('button');
-      toggle.className = 'pr-toggle';
-      toggle.textContent = entry.expanded ? '▼' : '▶';
-
-      const info    = document.createElement('div');
-      info.className = 'pr-info';
-
-      const titleEl = document.createElement('a');
-      titleEl.className = 'pr-title';
-      titleEl.textContent = pr.title;
-      titleEl.title = pr.title;
-      titleEl.href   = pr.html_url;
-      titleEl.target = '_blank';
-      titleEl.rel    = 'noopener';
-
-      const metaLine = document.createElement('div');
-      metaLine.className = 'pr-meta-line';
-
-      // Branch workflow dots
-      const branchDots = makeDotRow('Branch:', branchRuns);
-      metaLine.appendChild(branchDots);
-
-      // Main dots (only if merged)
-      if (isMerged) {
-        const mainDots = makeDotRow('Main:', masterRuns);
-        metaLine.appendChild(mainDots);
-      }
-
-      info.appendChild(titleEl);
-      info.appendChild(metaLine);
-
-      // Action button
-      let actionEl;
-      if (isMerged) {
-        const badge = document.createElement('span');
-        badge.className   = 'merged-badge';
-        badge.textContent = 'Merged ✓';
-        actionEl = badge;
-      } else {
-        const btn = document.createElement('button');
-        if (st === 'success') {
-          btn.className   = 'merge-btn';
-          btn.textContent = 'Merge';
-          btn.title       = `Squash and merge PR #${pr.number}`;
-          btn.addEventListener('click', e => { e.preventDefault(); mergePREntry(pr, btn, repo, entry); });
-        } else {
-          const isOn = pr.auto_merge !== null;
-          btn.className   = isOn ? 'automerge-btn am-on' : 'automerge-btn am-off';
-          btn.textContent = isOn ? 'AUTO ●' : 'AUTO ○';
-          btn.title       = isOn ? 'Automerge enabled — click to disable' : 'Click to enable automerge';
-          btn.addEventListener('click', e => { e.preventDefault(); toggleAutoMerge(pr, btn, repo); });
+      // Latest run per workflow → branch status
+      const latestByWf = {};
+      items.forEach(({ run, wfName }) => {
+        if (!latestByWf[wfName] || new Date(run.created_at) > new Date(latestByWf[wfName].created_at)) {
+          latestByWf[wfName] = run;
         }
-        actionEl = btn;
-      }
-
-      hdr.appendChild(toggle);
-      hdr.appendChild(info);
-      hdr.appendChild(actionEl);
-
-      // ── Body (expanded) ──
-      const body = document.createElement('div');
-      body.className = 'pr-row-body';
-      body.style.display = entry.expanded ? '' : 'none';
-
-      // Author line
-      const authorLine = document.createElement('div');
-      authorLine.className = 'pr-author-line';
-      if (pr.user?.avatar_url) {
-        const img = document.createElement('img');
-        img.className = 'pr-avatar';
-        img.src = pr.user.avatar_url;
-        img.alt = '';
-        authorLine.appendChild(img);
-      }
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'pr-author-name';
-      nameSpan.textContent = pr.user?.login || '';
-      const metaSpan = document.createElement('span');
-      metaSpan.textContent = `· opened ${timeAgo(pr.created_at)} · #${pr.number}`;
-      authorLine.appendChild(nameSpan);
-      authorLine.appendChild(metaSpan);
-      body.appendChild(authorLine);
-
-      // Branch builds section
-      if (wfNames.length) {
-        body.appendChild(buildRunSection('Branch builds', wfNames, branchRuns));
-      }
-
-      // Main build section (always show for merged so user can track it)
-      if (isMerged) {
-        body.appendChild(buildRunSection('Main build (after merge)', wfNames, masterRuns));
-      }
-
-      // Toggle handler
-      toggle.addEventListener('click', () => {
-        entry.expanded = !entry.expanded;
-        toggle.textContent = entry.expanded ? '▼' : '▶';
-        body.style.display = entry.expanded ? '' : 'none';
       });
+      const statuses = Object.values(latestByWf).map(runSt);
+      const branchSt = statuses.every(s => s === 'success') ? 'success'
+                     : statuses.some(s => s === 'running')  ? 'running'
+                     : statuses.some(s => s === 'failure')  ? 'failure'
+                     : 'other';
 
-      row.appendChild(hdr);
-      row.appendChild(body);
-      return row;
-    }
+      const group = document.createElement('div');
+      group.className = 'branch-group';
 
-    function makeDotRow(label, runs) {
-      const wrap = document.createElement('span');
-      wrap.className = 'wf-dots';
+      // Header: status dot + branch name + action button
+      const hdr = document.createElement('div');
+      hdr.className = 'branch-hdr';
 
-      const lbl = document.createElement('span');
-      lbl.className = 'wf-section-label';
-      lbl.textContent = label;
-      wrap.appendChild(lbl);
+      const dot = document.createElement('span');
+      dot.className = `branch-dot ${branchSt}`;
 
-      Object.entries(runs).forEach(([wfName, run]) => {
-        const dotSt = run ? runSt(run) : 'other';
-        const item  = document.createElement('span');
-        item.className = 'wf-dot-item';
-        item.title     = `${wfName}: ${dotSt}`;
+      const label = document.createElement('span');
+      label.className = 'branch-label';
+      label.textContent = branch;
+      label.title = branch;
 
-        const dot  = document.createElement('span');
-        dot.className = `dot ${dotSt}`;
+      const btn = document.createElement('button');
+      if (branchSt === 'success') {
+        btn.className   = 'merge-btn';
+        btn.textContent = 'Merge';
+        btn.title       = `Squash-merge ${branch}`;
+        btn.addEventListener('click', () => mergeBranch(repo, branch, btn));
+      } else {
+        btn.className   = 'automerge-btn am-off';
+        btn.textContent = 'AUTO ○';
+        btn.title       = 'Enable automerge';
+        btn.addEventListener('click', () => toggleAutoMergeBranch(repo, branch, btn));
+      }
 
-        const lbl2 = document.createElement('span');
-        lbl2.className  = 'wf-dot-label';
-        lbl2.textContent = wfName;
+      hdr.appendChild(dot);
+      hdr.appendChild(label);
+      hdr.appendChild(btn);
+      group.appendChild(hdr);
 
-        item.appendChild(dot);
-        item.appendChild(lbl2);
-        wrap.appendChild(item);
-      });
-      return wrap;
-    }
+      // Run lines
+      Object.entries(latestByWf).forEach(([wfName, run]) => group.appendChild(buildRunLine(run, wfName)));
 
-    function buildRunSection(title, wfNames, runsMap) {
-      const section = document.createElement('div');
-      section.className = 'pr-builds-section';
-
-      const label = document.createElement('div');
-      label.className   = 'pr-builds-label';
-      label.textContent = title;
-      section.appendChild(label);
-
-      wfNames.forEach(wfName => {
-        section.appendChild(buildRunLine(runsMap[wfName], wfName));
-      });
-      return section;
+      return group;
     }
 
     function buildRunLine(run, wfName) {
-      if (!run) {
-        const div = document.createElement('div');
-        div.className = 'run-line other';
-        const dot = document.createElement('span');
-        dot.className = 'dot other';
-        const info = document.createElement('span');
-        info.className = 'run-line-info';
-        info.innerHTML = `<span class="run-line-wf">${escHtml(wfName)}</span><span class="run-line-meta">No runs yet</span>`;
-        div.appendChild(dot);
-        div.appendChild(info);
-        return div;
-      }
-
-      const st   = runSt(run);
-      const a    = document.createElement('a');
+      const st    = runSt(run);
+      const a     = document.createElement('a');
       a.className = `run-line ${st}`;
       a.href      = run.html_url;
       a.target    = '_blank';
@@ -1348,45 +1074,29 @@
 
       const info = document.createElement('span');
       info.className = 'run-line-info';
-      info.innerHTML = `<span class="run-line-wf">${escHtml(title)}</span><span class="run-line-meta">${escHtml(meta)}</span>`;
 
+      const titleEl = document.createElement('span');
+      titleEl.className   = 'run-line-title';
+      titleEl.textContent = title;
+
+      const metaEl = document.createElement('span');
+      metaEl.className   = 'run-line-meta';
+      metaEl.textContent = meta;
+
+      info.appendChild(titleEl);
+      info.appendChild(metaEl);
       a.appendChild(dot);
       a.appendChild(info);
       return a;
     }
 
-    // Like buildRunLine but for the "no PR" section: show branch + commit title instead of workflow name
-    function buildDirectRunLine(run, wfName) {
-      const st  = runSt(run);
-      const a   = document.createElement('a');
-      a.className = `run-line ${st}`;
-      a.href      = run.html_url;
-      a.target    = '_blank';
-      a.rel       = 'noopener';
-
-      const dot = document.createElement('span');
-      dot.className = `dot ${st}`;
-
-      const dur     = formatDuration(run);
-      const branch  = run.head_branch || '';
-      const title   = run.display_title || run.head_commit?.message?.split('\n')[0] || '';
-      const numTime = `${wfName} #${run.run_number}${dur ? ` · ${dur}` : ''} · ${timeAgo(run.created_at)}`;
-      const meta    = title ? `${title} · ${numTime}` : numTime;
-
-      const info = document.createElement('span');
-      info.className = 'run-line-info';
-      info.innerHTML = `<span class="run-line-wf">${escHtml(branch)}</span><span class="run-line-meta">${escHtml(meta)}</span>`;
-
-      a.appendChild(dot);
-      a.appendChild(info);
-      return a;
-    }
-
-    // ── Merge / automerge ────────────────────────────────────────────────────
-    async function mergePREntry(pr, btn, repo, entry) {
+    // ── Merge / automerge (lazy PR fetch) ────────────────────────────────────
+    async function mergeBranch(repo, branch, btn) {
       btn.disabled    = true;
       btn.textContent = '…';
       try {
+        const pr = await fetchPRForBranch(repo, branch);
+        if (!pr) throw new Error('No open PR for this branch');
         const res = await fetch(
           `https://api.github.com/repos/${getOrg()}/${repo}/pulls/${pr.number}/merge`,
           {
@@ -1399,18 +1109,9 @@
           const body = await res.json().catch(() => ({}));
           throw new Error(body.message || res.status);
         }
-        const data = res.ok ? await res.json().catch(() => ({})) : {};
-        // Optimistically mark merged so the row transitions immediately
-        pr.merged_at        = new Date().toISOString();
-        pr.merge_commit_sha = data.sha || null;
-        delete prCache[repo];
-        renderPRCards(repo);
-        // Re-fetch to get actual merge_commit_sha + master build
-        setTimeout(() => {
-          delete prCache[repo];
-          const repoEntry = REPOS.find(r => r.name === repo);
-          if (repoEntry) fetchPRsForRepo(repoEntry);
-        }, 3000);
+        btn.className   = 'merge-btn merged';
+        btn.textContent = 'Merged ✓';
+        btn.disabled    = true;
       } catch(e) {
         btn.disabled    = false;
         btn.textContent = 'Merge';
@@ -1418,15 +1119,17 @@
       }
     }
 
-    async function toggleAutoMerge(pr, btn, repo) {
-      const enabling = pr.auto_merge === null;
-      btn.disabled   = true;
-
-      const query = enabling
-        ? `mutation($id:ID!){enablePullRequestAutoMerge(input:{pullRequestId:$id,mergeMethod:MERGE}){pullRequest{number}}}`
-        : `mutation($id:ID!){disablePullRequestAutoMerge(input:{pullRequestId:$id}){pullRequest{number}}}`;
-
+    async function toggleAutoMergeBranch(repo, branch, btn) {
+      btn.disabled = true;
       try {
+        const pr = await fetchPRForBranch(repo, branch);
+        if (!pr) throw new Error('No open PR for this branch');
+
+        const enabling = pr.auto_merge === null;
+        const query    = enabling
+          ? `mutation($id:ID!){enablePullRequestAutoMerge(input:{pullRequestId:$id,mergeMethod:MERGE}){pullRequest{number}}}`
+          : `mutation($id:ID!){disablePullRequestAutoMerge(input:{pullRequestId:$id}){pullRequest{number}}}`;
+
         const res  = await fetch('https://api.github.com/graphql', {
           method: 'POST',
           headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
@@ -1435,10 +1138,9 @@
         const json = await res.json();
         if (json.errors?.length) throw new Error(json.errors[0].message);
 
-        pr.auto_merge   = enabling ? {} : null;
-        delete prCache[repo];
         btn.className   = enabling ? 'automerge-btn am-on' : 'automerge-btn am-off';
         btn.textContent = enabling ? 'AUTO ●' : 'AUTO ○';
+        btn.title       = enabling ? 'Automerge enabled — click to disable' : 'Click to enable automerge';
       } catch(e) {
         btn.title = `Error: ${e.message}`;
       } finally {
@@ -1463,6 +1165,11 @@
       return `${Math.round(s/86400)}d ago`;
     }
 
+    function isToday(d) {
+      const x = new Date(d), n = new Date();
+      return x.getFullYear() === n.getFullYear() && x.getMonth() === n.getMonth() && x.getDate() === n.getDate();
+    }
+
     function escHtml(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
@@ -1480,22 +1187,15 @@
       return MOODS.find(m => rate >= m.min) || MOODS[MOODS.length - 1];
     }
 
-    function isToday(d) {
-      const x = new Date(d), n = new Date();
-      return x.getFullYear() === n.getFullYear() && x.getMonth() === n.getMonth() && x.getDate() === n.getDate();
-    }
-
     function updateMoodAndStats() {
-      const allEntries    = Object.values(allPRData).flat();
-      const openEntries   = allEntries.filter(e => !e.pr.merged_at);
-      const mergedToday   = allEntries.filter(e => e.pr.merged_at && isToday(e.pr.merged_at));
-      if (!allEntries.length) return;
+      const flat = Object.values(allRunsByRepo).flatMap(({ runsByWf = {} }) => Object.values(runsByWf).flat());
+      if (!flat.length) return;
 
-      // Merged-today PRs count as wins in the mood calculation
-      const total = openEntries.length + mergedToday.length;
-      const ready = openEntries.filter(e => prStatus(e) === 'success').length + mergedToday.length;
-      const rate  = total === 0 ? 0.5 : ready / total;
-      const mood  = calcMood(rate);
+      const done     = flat.filter(r => r.conclusion);
+      const rate     = done.length ? done.filter(r => r.conclusion === 'success').length / done.length : 0.5;
+      const mood     = calcMood(rate);
+      const todayAll = flat.filter(r => isToday(r.created_at));
+      const todayOk  = todayAll.filter(r => r.conclusion === 'success').length;
 
       const emojiEl = document.getElementById('mood-emoji');
       if (mood.emoji !== lastMoodEmoji) {
@@ -1508,10 +1208,9 @@
       document.getElementById('mood-label').textContent = mood.label;
 
       const pill = document.getElementById('stats-pill');
-      const parts = [];
-      if (ready - mergedToday.length > 0) parts.push(`${ready - mergedToday.length} ready`);
-      if (mergedToday.length > 0) parts.push(`${mergedToday.length} merged today`);
-      pill.textContent = parts.length ? parts.join(' · ') : (openEntries.length ? '0 ready' : 'No open PRs');
+      pill.textContent = todayAll.length === 0
+        ? 'No builds today yet'
+        : `${todayOk} / ${todayAll.length} builds passing today`;
 
       if (msgState.mood !== mood) {
         msgState.mood = mood;
@@ -1542,10 +1241,7 @@
       btn.classList.remove('done');
       tsEl.classList.remove('done');
 
-      // Clear PR cache for fresh data each cycle
-      Object.keys(prCache).forEach(k => delete prCache[k]);
-
-      await Promise.all(REPOS.map(r => fetchPRsForRepo(r)));
+      await Promise.all(REPOS.map(r => fetchRunsForRepo(r)));
       updateMoodAndStats();
       tsEl.textContent = `Updated ${new Date().toLocaleTimeString()}`;
 
@@ -1639,15 +1335,15 @@
 
       filtered.forEach(name => {
         const item = document.createElement('div');
-        item.className  = 'repo-item';
+        item.className    = 'repo-item';
         item.dataset.name = name;
 
-        const hdr    = document.createElement('div');
+        const hdr = document.createElement('div');
         hdr.className = 'repo-item-hdr';
         hdr.innerHTML = `<span class="ritem-arrow">▶</span><span class="ritem-name">${escHtml(name)}</span>`;
 
         const wfList = document.createElement('div');
-        wfList.className    = 'repo-wf-list';
+        wfList.className     = 'repo-wf-list';
         wfList.style.display = 'none';
 
         hdr.addEventListener('click', () => toggleRepoExpand(item));
@@ -1723,14 +1419,13 @@
         row.className = 'wf-item';
 
         const nameEl = document.createElement('span');
-        nameEl.className  = 'wf-name';
+        nameEl.className   = 'wf-name';
         nameEl.textContent = wf.name;
 
         const btn     = document.createElement('button');
-        btn.className = isAdded ? 'wf-add-btn added' : 'wf-add-btn';
+        btn.className   = isAdded ? 'wf-add-btn added' : 'wf-add-btn';
         btn.textContent = isAdded ? '✓' : '+';
         btn.disabled    = isAdded;
-        btn.dataset.wf  = wf.name;
 
         if (!isAdded) {
           btn.addEventListener('click', () => addToMonitoring(repoName, wf.name, btn));
@@ -1766,7 +1461,7 @@
         pill.dataset.workflows = JSON.stringify([workflowName]);
 
         const repoLabel = document.createElement('span');
-        repoLabel.className  = 'pill-repo-name';
+        repoLabel.className   = 'pill-repo-name';
         repoLabel.textContent = repoName;
 
         const chipsEl = document.createElement('span');
@@ -1809,12 +1504,7 @@
     function removeWorkflowFromPill(pill, repoName, workflowName) {
       let workflows = JSON.parse(pill.dataset.workflows || '[]');
       workflows = workflows.filter(w => w !== workflowName);
-
-      if (!workflows.length) {
-        removeRepoFromMonitoring(pill, repoName);
-        return;
-      }
-
+      if (!workflows.length) { removeRepoFromMonitoring(pill, repoName); return; }
       pill.dataset.workflows = JSON.stringify(workflows);
       renderPillChips(pill, repoName, workflows);
       updateMonitoringState();
@@ -1895,9 +1585,7 @@
       }
 
       Object.keys(wfIdCache).forEach(k => delete wfIdCache[k]);
-      Object.keys(prCache).forEach(k => delete prCache[k]);
-      allPRData     = {};
-      allDirectRuns = {};
+      allRunsByRepo = {};
       closeSettings();
       rebuildCards();
       fetchAll();
