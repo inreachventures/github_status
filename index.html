@@ -103,7 +103,7 @@
     }
     #motivational-msg.entering { animation: msgFadeIn 0.45s ease both; }
 
-    /* ── Cards: max 3 columns, wraps to new rows automatically ── */
+    /* ── Cards grid ── */
     #cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -138,47 +138,89 @@
       margin-bottom: 10px;
     }
 
-    /* ── Run rows ── */
-    .run-row {
+    /* ── Branch rows ── */
+    .branch-row {
       display: flex;
       align-items: center;
-      gap: 9px;
-      padding: 6px 7px;
-      border-radius: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-      border-left: 3px solid transparent;
-      transition: background 0.12s, border-color 0.12s;
-      margin-bottom: 2px;
+      gap: 7px;
+      padding: 4px 7px 4px 4px;
+      border-radius: 6px;
+      transition: background 0.12s;
     }
-    .run-row:hover       { background: rgba(255,255,255,0.045); }
-    .run-row.success     { border-left-color: #00d4aa; }
-    .run-row.failure     { border-left-color: #ff4757; }
-    .run-row.running     { border-left-color: #ffd43b; }
-    .run-row.other       { border-left-color: #3a3a4a; }
+    .branch-row:hover { background: rgba(255,255,255,0.03); }
 
-    .dot {
-      width: 7px;
-      height: 7px;
+    .branch-dot {
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
     }
-    .dot.success { background: #00d4aa; box-shadow: 0 0 5px rgba(0,212,170,0.5); }
-    .dot.failure { background: #ff4757; box-shadow: 0 0 7px rgba(255,71,87,0.6); }
-    .dot.running { background: #ffd43b; animation: pulse 1.4s ease-in-out infinite; isolation: isolate; }
-    .dot.other   { background: #3a3a4a; }
+    .branch-dot.success { background: #00d4aa; box-shadow: 0 0 5px rgba(0,212,170,0.5); }
+    .branch-dot.failure { background: #ff4757; box-shadow: 0 0 7px rgba(255,71,87,0.6); }
+    .branch-dot.running { background: #ffd43b; animation: pulse 1.4s ease-in-out infinite; }
+    .branch-dot.other   { background: #3a3a4a; }
+    .branch-dot.merged  { background: #a371f7; box-shadow: 0 0 5px rgba(163,113,247,0.45); }
 
-    .run-row { align-items: flex-start; }
-    .dot { margin-top: 5px; }
-    .run-info { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 2px; }
-    .run-title   { font-size: 0.72rem; font-weight: 600; color: #d0d0d0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .run-trigger { font-size: 0.63rem; color: #667; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .run-meta    { font-size: 0.61rem; color: #445; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .merged-badge {
+      font-size: 0.57rem;
+      font-weight: 600;
+      color: #7a5ea0;
+      letter-spacing: 0.03em;
+      flex-shrink: 0;
+    }
+
+    .branch-name {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #889;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+      flex-shrink: 0;
+      text-decoration: none;
+    }
+    .branch-name:hover { color: #aab; }
+
+    .branch-commit {
+      font-size: 0.63rem;
+      color: #4a5060;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .branch-time {
+      font-size: 0.59rem;
+      color: #384050;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── Section separator ── */
+    .section-sep {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 8px 2px 5px;
+      color: #2a2f3a;
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .section-sep::before, .section-sep::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.04);
+    }
 
     /* ── Skeleton ── */
     .skeleton {
-      height: 54px;
+      height: 42px;
       border-radius: 8px;
       background: linear-gradient(90deg,
         rgba(255,255,255,0.03) 25%,
@@ -189,31 +231,7 @@
       margin-bottom: 2px;
     }
     .err { color: #ff6b6b; font-size: 0.72rem; padding: 4px 2px; }
-
-    /* ── Date separator ── */
-    .date-sep {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      margin: 5px 2px;
-      color: #2a2f3a;
-      font-size: 0.57rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .date-sep::before, .date-sep::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: rgba(255,255,255,0.05);
-    }
-    .no-today-msg {
-      font-size: 0.68rem;
-      color: #445;
-      padding: 4px 7px 2px;
-      font-style: italic;
-    }
+    .no-runs-msg { font-size: 0.68rem; color: #445; padding: 4px 7px 2px; font-style: italic; }
 
     /* ── Automerge toggle ── */
     .automerge-btn {
@@ -240,7 +258,25 @@
       color: #00d4aa;
     }
     .automerge-btn.am-on:hover   { background: rgba(0,212,170,0.22); }
-    .automerge-btn:disabled      { opacity: 0.4; pointer-events: none; }
+    .automerge-btn.am-creating {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #667;
+    }
+    .automerge-btn.am-creating::after {
+      content: '';
+      display: inline-block;
+      width: 7px; height: 7px;
+      border: 1.5px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+    .automerge-btn:disabled      { opacity: 0.5; pointer-events: none; }
+
+    /* ── Merge button — GitHub purple ── */
     .merge-btn {
       flex-shrink: 0;
       border-radius: 5px;
@@ -251,14 +287,14 @@
       cursor: pointer;
       line-height: 1.5;
       white-space: nowrap;
-      background: rgba(0,212,170,0.12);
-      border: 1px solid rgba(0,212,170,0.35);
-      color: #00d4aa;
+      background: rgba(130,80,223,0.15);
+      border: 1px solid rgba(130,80,223,0.45);
+      color: #a371f7;
       transition: background 0.15s, opacity 0.15s;
     }
-    .merge-btn:hover    { background: rgba(0,212,170,0.25); }
+    .merge-btn:hover    { background: rgba(130,80,223,0.28); }
     .merge-btn:disabled { opacity: 0.4; pointer-events: none; }
-    .merge-btn.merged   { background: transparent; border-color: rgba(255,255,255,0.1); color: #3a7a6a; cursor: default; }
+    .merge-btn.merged   { background: transparent; border-color: rgba(130,80,223,0.15); color: #7a5ea0; cursor: default; }
 
     /* ── Footer ── */
     #footer {
@@ -451,7 +487,6 @@
     }
     #token-toggle:hover { color: #00d4aa; }
 
-    /* ── Org row with Load button ── */
     .org-row { display: flex; gap: 6px; }
     .org-row .s-input { flex: 1; }
     .load-repos-btn {
@@ -575,20 +610,43 @@
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.07);
       border-radius: 8px;
+      flex-wrap: wrap;
     }
-    .pill-label {
+    .pill-repo-name {
       font-size: 0.72rem;
-      color: #aaa;
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .pill-label strong {
       color: #8ab8ff;
       font-weight: 600;
+      flex-shrink: 0;
     }
+    .pill-wf-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      flex: 1;
+      min-width: 0;
+    }
+    .pill-wf-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 0.62rem;
+      color: #778;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px;
+      padding: 1px 4px 1px 6px;
+    }
+    .pill-wf-chip-remove {
+      background: none;
+      border: none;
+      color: #334;
+      cursor: pointer;
+      font-size: 0.65rem;
+      padding: 0;
+      line-height: 1;
+      transition: color 0.12s;
+    }
+    .pill-wf-chip-remove:hover { color: #ff4757; }
     .pill-remove {
       background: none;
       border: none;
@@ -772,28 +830,47 @@
       },
     ];
 
-    let allRuns = {};
-    let msgState = { mood: null, idx: 0 };
-    let msgTimer = null;
+    // { [repo]: { runsByWf: { [wfName]: [run,...] }, activeBranches: Set } }
+    let allRunsByRepo = {};
+    // { [repo]: { [branch]: pr | null } }
+    let prCache = {};
+    // { [repo]: string } — default branch name
+    let repoDefaultBranch = {};
+    let msgState      = { mood: null, idx: 0 };
+    let msgTimer      = null;
     let lastMoodEmoji = null;
-    const wfIdCache = {};
+    const wfIdCache   = {};
 
-    // ── Repo browser state ──────────────────────────────────────────────────
+    // ── Repo browser state ───────────────────────────────────────────────────
     let allRepos = [];
     let lastLoadedOrg = '';
     const repoWorkflows = {};
 
-    // ── Open PR cache (for automerge toggles) ───────────────────────────────
-    const openPRsCache = {};
-    const mergedPRs    = new Set();
-
+    // ── Storage helpers ──────────────────────────────────────────────────────
     function getToken() { return localStorage.getItem('gh_token') || ''; }
     function getOrg()   { return localStorage.getItem('gh_org') || ''; }
+
     function getRepos() {
-      try { const s = localStorage.getItem('gh_repos'); if (s) return JSON.parse(s); } catch(e) {}
+      try {
+        const s = localStorage.getItem('gh_repos');
+        if (!s) return [];
+        let repos = JSON.parse(s);
+        // Migrate old { name, workflow } format to { name, workflows[] }
+        if (repos.length && repos[0].workflow !== undefined) {
+          const byName = {};
+          repos.forEach(r => {
+            if (!byName[r.name]) byName[r.name] = [];
+            if (r.workflow && !byName[r.name].includes(r.workflow)) byName[r.name].push(r.workflow);
+          });
+          repos = Object.entries(byName).map(([name, workflows]) => ({ name, workflows }));
+          localStorage.setItem('gh_repos', JSON.stringify(repos));
+        }
+        return repos;
+      } catch(e) {}
       return [];
     }
 
+    // ── GitHub API ───────────────────────────────────────────────────────────
     async function ghFetch(path) {
       const res = await fetch(`https://api.github.com${path}`, {
         headers: { Authorization: `Bearer ${getToken()}`, Accept: 'application/vnd.github+json' }
@@ -811,85 +888,298 @@
       return wf ? wf.id : null;
     }
 
-    async function fetchOpenPRs(repo) {
-      if (openPRsCache[repo]) return openPRsCache[repo];
+    // Lazy PR fetch for a specific branch — only called when user clicks Merge/AUTO
+    async function fetchPRForBranch(repo, branch) {
+      const org = getOrg();
+      const data = await ghFetch(
+        `/repos/${org}/${repo}/pulls?state=open&head=${encodeURIComponent(org)}:${encodeURIComponent(branch)}&per_page=1`
+      );
+      return data[0] || null;
+    }
+
+    // ── Fetch runs for a repo ────────────────────────────────────────────────
+    async function fetchRunsForRepo({ name: repo, workflows: workflowNames }) {
+      const card = document.getElementById(`card-${repo}`);
+      if (!card) return;
+
       try {
-        const data = await ghFetch(`/repos/${getOrg()}/${repo}/pulls?state=open&per_page=100`);
-        openPRsCache[repo] = data;
-        return data;
+        // Resolve workflow IDs
+        const wfIds = {};
+        await Promise.all((workflowNames || []).map(async wfName => {
+          wfIds[wfName] = await findWorkflowId(repo, wfName);
+        }));
+
+        // Fetch runs + branches + open PRs + (once) repo default branch in parallel
+        const runsByWf = {};
+        const org = getOrg();
+        const [, branchesResp, prsResp, repoResp] = await Promise.all([
+          Promise.all((workflowNames || []).map(async wfName => {
+            const wfId = wfIds[wfName];
+            if (!wfId) { runsByWf[wfName] = []; return; }
+            try {
+              const d = await ghFetch(
+                `/repos/${org}/${repo}/actions/workflows/${wfId}/runs?per_page=20`
+              );
+              runsByWf[wfName] = d.workflow_runs || [];
+            } catch(e) {
+              runsByWf[wfName] = [];
+            }
+          })),
+          ghFetch(`/repos/${org}/${repo}/branches?per_page=100&sort=updated&direction=desc`).catch(() => null),
+          ghFetch(`/repos/${org}/${repo}/pulls?state=open&per_page=100`).catch(() => null),
+          repoDefaultBranch[repo] ? Promise.resolve(null) : ghFetch(`/repos/${org}/${repo}`).catch(() => null),
+        ]);
+
+        const activeBranches = new Set((branchesResp || []).map(b => b.name));
+
+        prCache[repo] = {};
+        (prsResp || []).forEach(pr => { prCache[repo][pr.head.ref] = pr; });
+
+        if (repoResp?.default_branch) repoDefaultBranch[repo] = repoResp.default_branch;
+
+        allRunsByRepo[repo] = { runsByWf, activeBranches };
+        renderBranchCards(repo);
       } catch(e) {
-        return [];
+        const sub = card.querySelector('.card-subtitle');
+        while (sub && sub.nextSibling) sub.nextSibling.remove();
+        card.insertAdjacentHTML('beforeend', `<div class="err">Error: ${escHtml(e.message)}</div>`);
       }
     }
 
-    async function mergePR(pr, btn, repo) {
-      btn.disabled = true;
+    // ── Render: group runs by branch ─────────────────────────────────────────
+    function renderBranchCards(repo) {
+      const card = document.getElementById(`card-${repo}`);
+      if (!card) return;
+
+      const sub = card.querySelector('.card-subtitle');
+      while (sub && sub.nextSibling) sub.nextSibling.remove();
+
+      const { runsByWf = {}, activeBranches } = allRunsByRepo[repo] || {};
+      const allItems = Object.entries(runsByWf)
+        .flatMap(([wfName, runs]) => runs.map(r => ({ run: r, wfName })));
+
+      if (!allItems.length) {
+        card.insertAdjacentHTML('beforeend', '<div class="no-runs-msg">No runs found</div>');
+        return;
+      }
+
+      // Only keep runs from the last 7 days
+      const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+      const weekItems = allItems.filter(i => new Date(i.run.created_at).getTime() > weekAgo);
+
+      // Group by branch
+      const byBranch = {};
+      weekItems.forEach(item => {
+        const b = item.run.head_branch || '(unknown)';
+        if (!byBranch[b]) byBranch[b] = [];
+        byBranch[b].push(item);
+      });
+
+      // Sort by most recent run desc, cap at 5 branches
+      const branches = Object.entries(byBranch)
+        .sort((a, b) => {
+          const aT = Math.max(...a[1].map(i => new Date(i.run.created_at).getTime()));
+          const bT = Math.max(...b[1].map(i => new Date(i.run.created_at).getTime()));
+          return bT - aT;
+        })
+        .slice(0, 5);
+
+      // Split: today vs older (within the week)
+      const todayBranches = branches.filter(([, items]) =>
+        items.some(i => isToday(i.run.created_at))
+      );
+      const olderBranches = branches.filter(([, items]) =>
+        !items.some(i => isToday(i.run.created_at))
+      );
+
+      const appendSep = label => {
+        const sep = document.createElement('div');
+        sep.className = 'section-sep';
+        sep.innerHTML = `<span>${label}</span>`;
+        card.appendChild(sep);
+      };
+
+      const hasBoth = todayBranches.length && olderBranches.length;
+      if (hasBoth) appendSep('today');
+      todayBranches.forEach(([branch, items]) => card.appendChild(buildBranchGroup(repo, branch, items)));
+      if (olderBranches.length) appendSep('older');
+      olderBranches.forEach(([branch, items]) => card.appendChild(buildBranchGroup(repo, branch, items)));
+    }
+
+    function buildBranchGroup(repo, branch, items) {
+      // Latest run per workflow → branch status + most recent run overall
+      const latestByWf = {};
+      items.forEach(({ run, wfName }) => {
+        if (!latestByWf[wfName] || new Date(run.created_at) > new Date(latestByWf[wfName].created_at)) {
+          latestByWf[wfName] = run;
+        }
+      });
+      const statuses = Object.values(latestByWf).map(runSt);
+      const branchSt = statuses.every(s => s === 'success') ? 'success'
+                     : statuses.some(s => s === 'running')  ? 'running'
+                     : statuses.some(s => s === 'failure')  ? 'failure'
+                     : 'other';
+
+      const newestRun = Object.values(latestByWf).sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      )[0];
+
+      const row = document.createElement('div');
+      row.className = 'branch-row';
+
+      const activeBranches = allRunsByRepo[repo]?.activeBranches;
+      const branchExists   = !activeBranches || activeBranches.size === 0 || activeBranches.has(branch);
+      const isDefaultBranch = /^(main|master|develop|development)$/.test(branch);
+      const isMerged       = !isDefaultBranch && !branchExists;
+
+      const dot = document.createElement('span');
+      dot.className = `branch-dot ${isMerged ? 'merged' : branchSt}`;
+
+      const pr = prCache[repo]?.[branch] ?? null;
+      const runUrl = newestRun?.html_url || '#';
+      const nameLink = document.createElement('a');
+      nameLink.className  = 'branch-name';
+      nameLink.textContent = branch;
+      nameLink.title       = branch;
+      nameLink.href        = pr?.html_url || runUrl;
+      nameLink.target      = '_blank';
+      nameLink.rel         = 'noopener';
+
+      const commitEl = document.createElement('span');
+      commitEl.className   = 'branch-commit';
+      commitEl.textContent = newestRun?.display_title || newestRun?.head_commit?.message?.split('\n')[0] || '';
+
+      const timeEl = document.createElement('span');
+      timeEl.className   = 'branch-time';
+      timeEl.textContent = newestRun ? timeAgo(newestRun.created_at) : '';
+
+      row.appendChild(dot);
+      row.appendChild(nameLink);
+      row.appendChild(commitEl);
+      row.appendChild(timeEl);
+
+      if (isMerged) {
+        const badge = document.createElement('span');
+        badge.className   = 'merged-badge';
+        badge.textContent = 'Merged';
+        row.appendChild(badge);
+      } else if (!isDefaultBranch) {
+        const autoMergeOn = pr !== null && pr.auto_merge != null;
+        const btn = document.createElement('button');
+        if (branchSt === 'success') {
+          btn.className   = 'merge-btn';
+          btn.textContent = 'Merge';
+          btn.title       = `Squash-merge ${branch}`;
+          btn.addEventListener('click', () => mergeBranch(repo, branch, btn));
+        } else {
+          btn.className   = autoMergeOn ? 'automerge-btn am-on' : 'automerge-btn am-off';
+          btn.textContent = autoMergeOn ? 'Auto Merge ✓' : 'Auto Merge';
+          btn.title       = autoMergeOn ? 'Automerge enabled — click to disable' : 'Enable automerge (creates PR if needed)';
+          btn.addEventListener('click', () => toggleAutoMergeBranch(repo, branch, btn));
+        }
+        row.appendChild(btn);
+      }
+
+      return row;
+    }
+
+    // ── Merge / automerge (lazy PR fetch) ────────────────────────────────────
+    async function mergeBranch(repo, branch, btn) {
+      btn.disabled    = true;
       btn.textContent = '…';
       try {
-        const res = await fetch(`https://api.github.com/repos/${getOrg()}/${repo}/pulls/${pr.number}/merge`, {
-          method: 'PUT',
-          headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json', Accept: 'application/vnd.github+json' },
-          body: JSON.stringify({ merge_method: 'squash' }),
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          // 405 = already merged / not mergeable — treat as success
-          if (res.status === 405) {
-            markMerged(pr, btn, repo);
-            return;
+        const pr = await fetchPRForBranch(repo, branch);
+        if (!pr) throw new Error('No open PR for this branch');
+        const res = await fetch(
+          `https://api.github.com/repos/${getOrg()}/${repo}/pulls/${pr.number}/merge`,
+          {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json', Accept: 'application/vnd.github+json' },
+            body: JSON.stringify({ merge_method: 'squash' }),
           }
+        );
+        if (!res.ok && res.status !== 405) {
+          const body = await res.json().catch(() => ({}));
           throw new Error(body.message || res.status);
         }
-        markMerged(pr, btn, repo);
+        btn.className   = 'merge-btn merged';
+        btn.textContent = 'Merged ✓';
+        btn.disabled    = true;
       } catch(e) {
-        btn.disabled = false;
+        btn.disabled    = false;
         btn.textContent = 'Merge';
-        btn.title = `Error: ${e.message}`;
+        btn.title       = `Error: ${e.message}`;
       }
     }
 
-    function markMerged(pr, btn, repo) {
-      mergedPRs.add(pr.number);
-      delete openPRsCache[repo];
-      btn.className   = 'merge-btn merged';
-      btn.textContent = 'Merged ✓';
-      btn.disabled    = true;
-    }
-
-    async function toggleAutoMerge(pr, btn, repo) {
-      const enabling = pr.auto_merge === null;
+    async function toggleAutoMergeBranch(repo, branch, btn) {
       btn.disabled = true;
-
-      const query = enabling
-        ? `mutation($id:ID!){enablePullRequestAutoMerge(input:{pullRequestId:$id,mergeMethod:MERGE}){pullRequest{number}}}`
-        : `mutation($id:ID!){disablePullRequestAutoMerge(input:{pullRequestId:$id}){pullRequest{number}}}`;
+      const org = getOrg();
 
       try {
-        const res = await fetch('https://api.github.com/graphql', {
+        let pr = prCache[repo]?.[branch] ?? null;
+
+        // No open PR — create one first
+        if (!pr) {
+          btn.className   = 'automerge-btn am-creating';
+          btn.textContent = 'Creating PR…';
+
+          const latestRun = Object.values(allRunsByRepo[repo]?.runsByWf || {})
+            .flatMap(runs => runs)
+            .filter(r => r.head_branch === branch)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+          const title = latestRun?.display_title || latestRun?.head_commit?.message?.split('\n')[0] || branch;
+          const base  = repoDefaultBranch[repo] || 'main';
+
+          const createRes = await fetch(`https://api.github.com/repos/${org}/${repo}/pulls`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json', Accept: 'application/vnd.github+json' },
+            body: JSON.stringify({ title, head: branch, base, body: '' }),
+          });
+          if (!createRes.ok) {
+            const body = await createRes.json().catch(() => ({}));
+            throw new Error(body.message || createRes.status);
+          }
+          pr = await createRes.json();
+          if (!prCache[repo]) prCache[repo] = {};
+          prCache[repo][branch] = pr;
+        }
+
+        // Toggle automerge on the PR
+        const enabling = pr.auto_merge == null;
+        const query    = enabling
+          ? `mutation($id:ID!){enablePullRequestAutoMerge(input:{pullRequestId:$id,mergeMethod:SQUASH}){pullRequest{number}}}`
+          : `mutation($id:ID!){disablePullRequestAutoMerge(input:{pullRequestId:$id}){pullRequest{number}}}`;
+
+        const gqlRes = await fetch('https://api.github.com/graphql', {
           method: 'POST',
           headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ query, variables: { id: pr.node_id } }),
         });
-        const json = await res.json();
+        const json = await gqlRes.json();
         if (json.errors?.length) throw new Error(json.errors[0].message);
 
-        // Optimistically update button and invalidate cache
-        pr.auto_merge = enabling ? {} : null;
-        delete openPRsCache[repo];
-        btn.className = enabling ? 'automerge-btn am-on' : 'automerge-btn am-off';
-        btn.textContent = enabling ? 'AUTO ●' : 'AUTO ○';
+        // Update local cache to reflect new state
+        prCache[repo][branch] = { ...pr, auto_merge: enabling ? { enabled: true } : null };
+
+        btn.className   = enabling ? 'automerge-btn am-on' : 'automerge-btn am-off';
+        btn.textContent = enabling ? 'Auto Merge ✓' : 'Auto Merge';
+        btn.title       = enabling ? 'Automerge enabled — click to disable' : 'Enable automerge (creates PR if needed)';
       } catch(e) {
-        btn.title = `Error: ${e.message}`;
+        btn.className   = 'automerge-btn am-off';
+        btn.textContent = 'Auto Merge';
+        btn.title       = `Error: ${e.message}`;
       } finally {
         btn.disabled = false;
       }
     }
 
+    // ── Utility functions ────────────────────────────────────────────────────
     function runSt(run) {
       const s = run.status, c = run.conclusion;
       if (s === 'in_progress' || s === 'queued' || s === 'waiting') return 'running';
-      if (c === 'success')  return 'success';
-      if (c === 'failure')  return 'failure';
+      if (c === 'success') return 'success';
+      if (c === 'failure') return 'failure';
       return 'other';
     }
 
@@ -919,52 +1209,30 @@
       return `${s}s`;
     }
 
-    function formatDateTime(dateStr) {
-      const d = new Date(dateStr), n = new Date();
-      const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-      if (d.toDateString() === n.toDateString()) return `Today at ${time}`;
-      const yest = new Date(n); yest.setDate(n.getDate() - 1);
-      if (d.toDateString() === yest.toDateString()) return `Yesterday at ${time}`;
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ` at ${time}`;
-    }
-
-    function triggerText(run) {
-      const sha   = (run.head_sha || '').slice(0, 7);
-      const actor = run.triggering_actor?.login || run.actor?.login || '';
-      switch (run.event) {
-        case 'push':              return `Commit ${sha} pushed by ${actor}`;
-        case 'pull_request':
-        case 'pull_request_target': return `Pull request by ${actor}`;
-        case 'workflow_dispatch': return `Manual run by ${actor}`;
-        case 'schedule':          return 'Scheduled run';
-        default:                  return actor ? `Triggered by ${actor}` : run.event;
-      }
-    }
-
-    function calcMood(runs) {
-      const done = runs.filter(r => r.conclusion);
-      if (!done.length) return MOODS[2];
-      const rate = done.filter(r => r.conclusion === 'success').length / done.length;
+    function calcMood(rate) {
       return MOODS.find(m => rate >= m.min) || MOODS[MOODS.length - 1];
     }
 
     function updateMoodAndStats() {
-      const flat = Object.values(allRuns).flat();
+      const flat = Object.values(allRunsByRepo).flatMap(({ runsByWf = {} }) => Object.values(runsByWf).flat());
       if (!flat.length) return;
 
-      const mood = calcMood(flat);
+      const done     = flat.filter(r => r.conclusion);
+      const rate     = done.length ? done.filter(r => r.conclusion === 'success').length / done.length : 0.5;
+      const mood     = calcMood(rate);
+      const todayAll = flat.filter(r => isToday(r.created_at));
+      const todayOk  = todayAll.filter(r => r.conclusion === 'success').length;
 
       const emojiEl = document.getElementById('mood-emoji');
       if (mood.emoji !== lastMoodEmoji) {
         emojiEl.classList.remove('pop');
+        void emojiEl.offsetWidth;
         emojiEl.classList.add('pop');
         lastMoodEmoji = mood.emoji;
       }
       emojiEl.textContent = mood.emoji;
       document.getElementById('mood-label').textContent = mood.label;
 
-      const todayAll = flat.filter(r => isToday(r.created_at));
-      const todayOk  = todayAll.filter(r => r.conclusion === 'success').length;
       const pill = document.getElementById('stats-pill');
       pill.textContent = todayAll.length === 0
         ? 'No builds today yet'
@@ -989,114 +1257,7 @@
       el.classList.add('entering');
     }
 
-    async function fetchRepo({ name: repo, workflow: workflowName }) {
-      const card      = document.getElementById(`card-${repo}`);
-      const subEl     = card.querySelector('.card-subtitle');
-      const firstLoad = !card.dataset.loaded;
-
-      subEl.textContent = workflowName;
-
-      if (firstLoad) {
-        while (subEl.nextSibling) subEl.nextSibling.remove();
-        for (let i = 0; i < 5; i++) {
-          const sk = document.createElement('div'); sk.className = 'skeleton';
-          card.appendChild(sk);
-        }
-      }
-
-      try {
-        const wfId = await findWorkflowId(repo, workflowName);
-        if (!wfId) {
-          while (subEl.nextSibling) subEl.nextSibling.remove();
-          subEl.insertAdjacentHTML('afterend', `<div class="err">Workflow "${workflowName}" not found</div>`);
-          return;
-        }
-
-        const [data, openPRs] = await Promise.all([
-          ghFetch(`/repos/${getOrg()}/${repo}/actions/workflows/${wfId}/runs?per_page=5`),
-          fetchOpenPRs(repo),
-        ]);
-        const runs = data.workflow_runs;
-        allRuns[repo] = runs;
-        card.dataset.loaded = '1';
-
-        while (subEl.nextSibling) subEl.nextSibling.remove();
-
-        if (!runs.length) {
-          subEl.insertAdjacentHTML('afterend', `<div class="err">No runs found</div>`);
-          return;
-        }
-
-        const prByBranch = {};
-        openPRs
-          .filter(pr => !mergedPRs.has(pr.number))
-          .forEach(pr => { prByBranch[pr.head.ref] = pr; });
-
-        const makeRunRow = run => {
-          const st  = runSt(run);
-          const pr  = prByBranch[run.head_branch] || null;
-          const a   = document.createElement('a');
-          a.className = `run-row ${st}`;
-          a.href      = run.html_url;
-          a.target    = '_blank';
-          a.rel       = 'noopener';
-          const title    = escHtml(run.display_title || run.head_commit?.message?.split('\n')[0] || `Run #${run.run_number}`);
-          const trigger  = escHtml(triggerText(run));
-          const dur      = formatDuration(run);
-          const dateTime = formatDateTime(run.created_at);
-          const meta     = `${escHtml(run.head_branch)} &middot; ${dateTime}${dur ? ` &middot; ${dur}` : ''}`;
-          a.innerHTML = `
-            <div class="dot ${st}"></div>
-            <div class="run-info">
-              <span class="run-title">${title}</span>
-              <span class="run-trigger">${escHtml(workflowName)} #${run.run_number} &middot; ${trigger}</span>
-              <span class="run-meta">${meta}</span>
-            </div>`;
-          if (pr) {
-            const btn = document.createElement('button');
-            if (run.conclusion === 'success') {
-              btn.className   = 'merge-btn';
-              btn.textContent = 'Merge';
-              btn.title       = `Squash and merge PR #${pr.number}`;
-              btn.addEventListener('click', e => { e.preventDefault(); mergePR(pr, btn, repo); });
-            } else {
-              const isOn = pr.auto_merge !== null;
-              btn.className   = isOn ? 'automerge-btn am-on' : 'automerge-btn am-off';
-              btn.textContent = isOn ? 'AUTO ●' : 'AUTO ○';
-              btn.title       = isOn ? 'Automerge enabled — click to disable' : 'Click to enable automerge';
-              btn.addEventListener('click', e => { e.preventDefault(); toggleAutoMerge(pr, btn, repo); });
-            }
-            a.appendChild(btn);
-          }
-          return a;
-        };
-
-        const todayRuns = runs.filter(r => isToday(r.created_at));
-        const pastRuns  = runs.filter(r => !isToday(r.created_at));
-
-        if (todayRuns.length === 0) {
-          const msg = document.createElement('div');
-          msg.className = 'no-today-msg';
-          msg.textContent = '0 runs today';
-          card.appendChild(msg);
-        } else {
-          todayRuns.forEach(run => card.appendChild(makeRunRow(run)));
-        }
-
-        if (pastRuns.length) {
-          const sep = document.createElement('div');
-          sep.className = 'date-sep';
-          sep.innerHTML = '<span>Earlier</span>';
-          card.appendChild(sep);
-          pastRuns.forEach(run => card.appendChild(makeRunRow(run)));
-        }
-
-      } catch (e) {
-        while (subEl.nextSibling) subEl.nextSibling.remove();
-        subEl.insertAdjacentHTML('afterend', `<div class="err">Error ${e.message}</div>`);
-      }
-    }
-
+    // ── Fetch all ────────────────────────────────────────────────────────────
     async function fetchAll() {
       if (!REPOS.length) return;
       const btn  = document.getElementById('refresh-btn');
@@ -1106,7 +1267,7 @@
       btn.classList.remove('done');
       tsEl.classList.remove('done');
 
-      await Promise.all(REPOS.map(r => fetchRepo(r)));
+      await Promise.all(REPOS.map(r => fetchRunsForRepo(r)));
       updateMoodAndStats();
       tsEl.textContent = `Updated ${new Date().toLocaleTimeString()}`;
 
@@ -1119,8 +1280,26 @@
       }));
     }
 
-    // ── Settings: repo browser ──────────────────────────────────────────────
+    // ── Cards ────────────────────────────────────────────────────────────────
+    function rebuildCards() {
+      const container = document.getElementById('cards');
+      const seen = new Set();
+      const html = [];
+      REPOS.forEach(r => {
+        if (seen.has(r.name)) return;
+        seen.add(r.name);
+        const wfLabel = (r.workflows || []).join(' · ');
+        html.push(`
+          <div class="card" id="card-${escHtml(r.name)}">
+            <div class="card-title">${escHtml(r.name)}</div>
+            <div class="card-subtitle">${escHtml(wfLabel)}</div>
+            <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+          </div>`);
+      });
+      container.innerHTML = html.join('');
+    }
 
+    // ── Settings: repo browser ───────────────────────────────────────────────
     async function loadReposForSettings() {
       const token = document.getElementById('s-token').value.trim();
       const org   = document.getElementById('s-org').value.trim();
@@ -1170,9 +1349,9 @@
     }
 
     function renderRepoBrowser(search) {
-      const q = (search || '').toLowerCase();
+      const q        = (search || '').toLowerCase();
       const filtered = q ? allRepos.filter(n => n.toLowerCase().includes(q)) : allRepos;
-      const list = document.getElementById('repo-browser-list');
+      const list     = document.getElementById('repo-browser-list');
       list.innerHTML = '';
 
       if (!filtered.length) {
@@ -1182,7 +1361,7 @@
 
       filtered.forEach(name => {
         const item = document.createElement('div');
-        item.className = 'repo-item';
+        item.className    = 'repo-item';
         item.dataset.name = name;
 
         const hdr = document.createElement('div');
@@ -1190,7 +1369,7 @@
         hdr.innerHTML = `<span class="ritem-arrow">▶</span><span class="ritem-name">${escHtml(name)}</span>`;
 
         const wfList = document.createElement('div');
-        wfList.className = 'repo-wf-list';
+        wfList.className     = 'repo-wf-list';
         wfList.style.display = 'none';
 
         hdr.addEventListener('click', () => toggleRepoExpand(item));
@@ -1207,12 +1386,12 @@
 
       if (wfList.style.display !== 'none') {
         wfList.style.display = 'none';
-        arrow.textContent = '▶';
+        arrow.textContent    = '▶';
         return;
       }
 
       wfList.style.display = '';
-      arrow.textContent = '▼';
+      arrow.textContent    = '▼';
 
       if (repoWorkflows[name] !== undefined) {
         renderWorkflows(item, repoWorkflows[name]);
@@ -1240,9 +1419,11 @@
 
     function getMonitoringKeys() {
       const keys = new Set();
-      document.querySelectorAll('#repos-list .monitoring-pill').forEach(p =>
-        keys.add(`${p.dataset.repo}::${p.dataset.workflow}`)
-      );
+      document.querySelectorAll('#repos-list .monitoring-pill').forEach(pill => {
+        const repo      = pill.dataset.repo;
+        const workflows = JSON.parse(pill.dataset.workflows || '[]');
+        workflows.forEach(wf => keys.add(`${repo}::${wf}`));
+      });
       return keys;
     }
 
@@ -1260,18 +1441,17 @@
 
       workflows.forEach(wf => {
         const isAdded = monitoring.has(`${repoName}::${wf.name}`);
-        const row  = document.createElement('div');
+        const row     = document.createElement('div');
         row.className = 'wf-item';
 
         const nameEl = document.createElement('span');
-        nameEl.className = 'wf-name';
+        nameEl.className   = 'wf-name';
         nameEl.textContent = wf.name;
 
-        const btn = document.createElement('button');
-        btn.className = isAdded ? 'wf-add-btn added' : 'wf-add-btn';
+        const btn     = document.createElement('button');
+        btn.className   = isAdded ? 'wf-add-btn added' : 'wf-add-btn';
         btn.textContent = isAdded ? '✓' : '+';
-        btn.disabled = isAdded;
-        btn.dataset.wf = wf.name;
+        btn.disabled    = isAdded;
 
         if (!isAdded) {
           btn.addEventListener('click', () => addToMonitoring(repoName, wf.name, btn));
@@ -1285,43 +1465,89 @@
 
     function addToMonitoring(repoName, workflowName, btn) {
       if (btn) {
-        btn.className = 'wf-add-btn added';
+        btn.className   = 'wf-add-btn added';
         btn.textContent = '✓';
-        btn.disabled = true;
+        btn.disabled    = true;
       }
 
       const list = document.getElementById('repos-list');
-      const pill = document.createElement('div');
-      pill.className = 'monitoring-pill';
-      pill.dataset.repo     = repoName;
-      pill.dataset.workflow = workflowName;
+      let pill   = list.querySelector(`.monitoring-pill[data-repo="${CSS.escape(repoName)}"]`);
 
-      const label = document.createElement('span');
-      label.className = 'pill-label';
-      label.innerHTML = `<strong>${escHtml(repoName)}</strong> · ${escHtml(workflowName)}`;
+      if (pill) {
+        const workflows = JSON.parse(pill.dataset.workflows || '[]');
+        if (!workflows.includes(workflowName)) {
+          workflows.push(workflowName);
+          pill.dataset.workflows = JSON.stringify(workflows);
+          renderPillChips(pill, repoName, workflows);
+        }
+      } else {
+        pill = document.createElement('div');
+        pill.className         = 'monitoring-pill';
+        pill.dataset.repo      = repoName;
+        pill.dataset.workflows = JSON.stringify([workflowName]);
 
-      const rmBtn = document.createElement('button');
-      rmBtn.className = 'pill-remove';
-      rmBtn.textContent = '✕';
-      rmBtn.addEventListener('click', () => removeFromMonitoring(pill, repoName, workflowName));
+        const repoLabel = document.createElement('span');
+        repoLabel.className   = 'pill-repo-name';
+        repoLabel.textContent = repoName;
 
-      pill.appendChild(label);
-      pill.appendChild(rmBtn);
-      list.appendChild(pill);
+        const chipsEl = document.createElement('span');
+        chipsEl.className = 'pill-wf-chips';
+
+        const rmAllBtn = document.createElement('button');
+        rmAllBtn.className   = 'pill-remove';
+        rmAllBtn.textContent = '✕';
+        rmAllBtn.title       = 'Remove repo';
+        rmAllBtn.addEventListener('click', () => removeRepoFromMonitoring(pill, repoName));
+
+        pill.appendChild(repoLabel);
+        pill.appendChild(chipsEl);
+        pill.appendChild(rmAllBtn);
+        list.appendChild(pill);
+        renderPillChips(pill, repoName, [workflowName]);
+      }
+
       updateMonitoringState();
     }
 
-    function removeFromMonitoring(pill, repoName, workflowName) {
+    function renderPillChips(pill, repoName, workflows) {
+      const chipsEl = pill.querySelector('.pill-wf-chips');
+      chipsEl.innerHTML = '';
+      workflows.forEach(wf => {
+        const chip = document.createElement('span');
+        chip.className = 'pill-wf-chip';
+        chip.appendChild(document.createTextNode(wf));
+
+        const rmBtn = document.createElement('button');
+        rmBtn.className   = 'pill-wf-chip-remove';
+        rmBtn.textContent = '×';
+        rmBtn.title       = `Remove ${wf}`;
+        rmBtn.addEventListener('click', () => removeWorkflowFromPill(pill, repoName, wf));
+        chip.appendChild(rmBtn);
+        chipsEl.appendChild(chip);
+      });
+    }
+
+    function removeWorkflowFromPill(pill, repoName, workflowName) {
+      let workflows = JSON.parse(pill.dataset.workflows || '[]');
+      workflows = workflows.filter(w => w !== workflowName);
+      if (!workflows.length) { removeRepoFromMonitoring(pill, repoName); return; }
+      pill.dataset.workflows = JSON.stringify(workflows);
+      renderPillChips(pill, repoName, workflows);
+      updateMonitoringState();
+      refreshRepoBrowserItem(repoName);
+    }
+
+    function removeRepoFromMonitoring(pill, repoName) {
       pill.remove();
       updateMonitoringState();
+      refreshRepoBrowserItem(repoName);
+    }
 
-      // Re-render the repo's workflow list if it's currently expanded and cached
+    function refreshRepoBrowserItem(repoName) {
       const repoItem = document.querySelector(`#repo-browser-list .repo-item[data-name="${CSS.escape(repoName)}"]`);
       if (repoItem && repoWorkflows[repoName] !== undefined) {
         const wfList = repoItem.querySelector('.repo-wf-list');
-        if (wfList && wfList.style.display !== 'none') {
-          renderWorkflows(repoItem, repoWorkflows[repoName]);
-        }
+        if (wfList && wfList.style.display !== 'none') renderWorkflows(repoItem, repoWorkflows[repoName]);
       }
     }
 
@@ -1332,8 +1558,7 @@
       document.getElementById('monitoring-empty').style.display = count ? 'none' : '';
     }
 
-    // ── Settings panel ─────────────────────────────────────────────────────
-
+    // ── Settings panel ───────────────────────────────────────────────────────
     function openSettings() {
       document.getElementById('s-token').value = getToken();
       document.getElementById('s-org').value   = getOrg();
@@ -1341,7 +1566,9 @@
 
       const list = document.getElementById('repos-list');
       list.innerHTML = '';
-      getRepos().forEach(r => addToMonitoring(r.name, r.workflow, null));
+      getRepos().forEach(r => {
+        (r.workflows || []).forEach(wf => addToMonitoring(r.name, wf, null));
+      });
       updateMonitoringState();
 
       if (allRepos.length) {
@@ -1367,16 +1594,6 @@
       inp.type = inp.type === 'password' ? 'text' : 'password';
     }
 
-    function rebuildCards() {
-      const container = document.getElementById('cards');
-      container.innerHTML = REPOS.map(r => `
-        <div class="card" id="card-${r.name}">
-          <div class="card-title">${escHtml(r.name)}</div>
-          <div class="card-subtitle">${escHtml(r.workflow)}</div>
-          <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
-        </div>`).join('');
-    }
-
     function saveSettings() {
       const token = document.getElementById('s-token').value.trim();
       const org   = document.getElementById('s-org').value.trim();
@@ -1385,7 +1602,8 @@
 
       const newRepos = [];
       document.querySelectorAll('#repos-list .monitoring-pill').forEach(pill => {
-        newRepos.push({ name: pill.dataset.repo, workflow: pill.dataset.workflow });
+        const workflows = JSON.parse(pill.dataset.workflows || '[]');
+        if (workflows.length) newRepos.push({ name: pill.dataset.repo, workflows });
       });
       if (newRepos.length) {
         REPOS = newRepos;
@@ -1393,15 +1611,14 @@
       }
 
       Object.keys(wfIdCache).forEach(k => delete wfIdCache[k]);
-      Object.keys(openPRsCache).forEach(k => delete openPRsCache[k]);
-      allRuns = {};
+      allRunsByRepo = {};
+      prCache = {};
       closeSettings();
       rebuildCards();
       fetchAll();
     }
 
-    // ── Interval picker ────────────────────────────────────────────────────
-
+    // ── Interval picker ──────────────────────────────────────────────────────
     function togglePicker() {
       document.getElementById('interval-options').classList.toggle('open');
     }
@@ -1410,7 +1627,7 @@
       refreshInterval = secs * 1000;
       clearInterval(refreshTimer);
       refreshTimer = setInterval(fetchAll, refreshInterval);
-      const label = secs < 60 ? `${secs}s` : secs === 90 ? '90s' : '2m';
+      const label = secs < 60 ? `${secs}s` : secs === 60 ? '1m' : secs === 90 ? '90s' : '2m';
       document.getElementById('interval-trigger').textContent = label;
       document.querySelectorAll('.iopt').forEach(el =>
         el.classList.toggle('active', +el.dataset.s === secs)
@@ -1438,8 +1655,7 @@
     document.getElementById('load-repos-btn').addEventListener('click', loadReposForSettings);
     document.getElementById('repo-search').addEventListener('input', e => renderRepoBrowser(e.target.value));
 
-    // ── Init ───────────────────────────────────────────────────────────────
-
+    // ── Init ─────────────────────────────────────────────────────────────────
     async function init() {
       REPOS = getRepos();
       if (!getToken() || !getOrg() || !REPOS.length) {
