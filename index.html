@@ -1033,13 +1033,14 @@
       label.textContent = branch;
       label.title = branch;
 
+      const isDefaultBranch = /^(main|master|develop|development)$/.test(branch);
       const btn = document.createElement('button');
-      if (branchSt === 'success') {
+      if (!isDefaultBranch && branchSt === 'success') {
         btn.className   = 'merge-btn';
         btn.textContent = 'Merge';
         btn.title       = `Squash-merge ${branch}`;
         btn.addEventListener('click', () => mergeBranch(repo, branch, btn));
-      } else {
+      } else if (!isDefaultBranch) {
         btn.className   = 'automerge-btn am-off';
         btn.textContent = 'AUTO ○';
         btn.title       = 'Enable automerge';
@@ -1048,7 +1049,7 @@
 
       hdr.appendChild(dot);
       hdr.appendChild(label);
-      hdr.appendChild(btn);
+      if (!isDefaultBranch) hdr.appendChild(btn);
       group.appendChild(hdr);
 
       // Run lines
