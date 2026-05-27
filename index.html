@@ -138,20 +138,20 @@
       margin-bottom: 10px;
     }
 
-    /* ── Branch groups ── */
-    .branch-group { margin-bottom: 6px; }
-    .branch-group:last-child { margin-bottom: 0; }
-
-    .branch-hdr {
+    /* ── Branch rows ── */
+    .branch-row {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 3px 7px 3px 4px;
-      margin-bottom: 1px;
+      gap: 7px;
+      padding: 4px 7px 4px 4px;
+      border-radius: 6px;
+      transition: background 0.12s;
     }
+    .branch-row:hover { background: rgba(255,255,255,0.03); }
+
     .branch-dot {
-      width: 7px;
-      height: 7px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
     }
@@ -160,68 +160,34 @@
     .branch-dot.running { background: #ffd43b; animation: pulse 1.4s ease-in-out infinite; }
     .branch-dot.other   { background: #3a3a4a; }
 
-    .branch-label {
+    .branch-name {
       font-size: 0.65rem;
       font-weight: 600;
       color: #889;
-      flex: 1;
-      min-width: 0;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* ── Run lines ── */
-    .run-line {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 4px 7px;
-      border-radius: 6px;
-      text-decoration: none;
-      color: inherit;
-      margin-bottom: 1px;
-      border-left: 2px solid transparent;
-      transition: background 0.12s;
-    }
-    .run-line:hover { background: rgba(255,255,255,0.04); }
-    .run-line.success { border-left-color: #00d4aa; }
-    .run-line.failure { border-left-color: #ff4757; }
-    .run-line.running { border-left-color: #ffd43b; }
-    .run-line.other   { border-left-color: #3a3a4a; }
-
-    .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
+      max-width: 160px;
       flex-shrink: 0;
+      text-decoration: none;
     }
-    .dot.success { background: #00d4aa; box-shadow: 0 0 4px rgba(0,212,170,0.5); }
-    .dot.failure { background: #ff4757; box-shadow: 0 0 6px rgba(255,71,87,0.6); }
-    .dot.running { background: #ffd43b; animation: pulse 1.4s ease-in-out infinite; }
-    .dot.other   { background: #3a3a4a; }
+    .branch-name:hover { color: #aab; }
 
-    .run-line-info {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      min-width: 0;
+    .branch-commit {
+      font-size: 0.63rem;
+      color: #4a5060;
       flex: 1;
-    }
-    .run-line-title {
-      font-size: 0.70rem;
-      font-weight: 500;
-      color: #ccc;
-      white-space: nowrap;
+      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-    .run-line-meta {
-      font-size: 0.60rem;
-      color: #445;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    }
+
+    .branch-time {
+      font-size: 0.59rem;
+      color: #384050;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     /* ── Section separator ── */
@@ -1031,10 +997,7 @@
     }
 
     function buildBranchGroup(repo, branch, items) {
-      // Sort runs newest-first
-      items.sort((a, b) => new Date(b.run.created_at) - new Date(a.run.created_at));
-
-      // Latest run per workflow → branch status
+      // Latest run per workflow → branch status + most recent run overall
       const latestByWf = {};
       items.forEach(({ run, wfName }) => {
         if (!latestByWf[wfName] || new Date(run.created_at) > new Date(latestByWf[wfName].created_at)) {
@@ -1047,79 +1010,58 @@
                      : statuses.some(s => s === 'failure')  ? 'failure'
                      : 'other';
 
-      const group = document.createElement('div');
-      group.className = 'branch-group';
+      const newestRun = Object.values(latestByWf).sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      )[0];
 
-      // Header: status dot + branch name + action button
-      const hdr = document.createElement('div');
-      hdr.className = 'branch-hdr';
+      const row = document.createElement('div');
+      row.className = 'branch-row';
 
       const dot = document.createElement('span');
       dot.className = `branch-dot ${branchSt}`;
 
-      const label = document.createElement('span');
-      label.className = 'branch-label';
-      label.textContent = branch;
-      label.title = branch;
+      const pr = prCache[repo]?.[branch] ?? null;
+      const runUrl = newestRun?.html_url || '#';
+      const nameLink = document.createElement('a');
+      nameLink.className  = 'branch-name';
+      nameLink.textContent = branch;
+      nameLink.title       = branch;
+      nameLink.href        = pr?.html_url || runUrl;
+      nameLink.target      = '_blank';
+      nameLink.rel         = 'noopener';
+
+      const commitEl = document.createElement('span');
+      commitEl.className   = 'branch-commit';
+      commitEl.textContent = newestRun?.display_title || newestRun?.head_commit?.message?.split('\n')[0] || '';
+
+      const timeEl = document.createElement('span');
+      timeEl.className   = 'branch-time';
+      timeEl.textContent = newestRun ? timeAgo(newestRun.created_at) : '';
+
+      row.appendChild(dot);
+      row.appendChild(nameLink);
+      row.appendChild(commitEl);
+      row.appendChild(timeEl);
 
       const isDefaultBranch = /^(main|master|develop|development)$/.test(branch);
-      const pr = prCache[repo]?.[branch] ?? null;
-      const autoMergeOn = pr !== null && pr.auto_merge != null;
-      const btn = document.createElement('button');
-      if (!isDefaultBranch && branchSt === 'success') {
-        btn.className   = 'merge-btn';
-        btn.textContent = 'Merge';
-        btn.title       = `Squash-merge ${branch}`;
-        btn.addEventListener('click', () => mergeBranch(repo, branch, btn));
-      } else if (!isDefaultBranch) {
-        btn.className   = autoMergeOn ? 'automerge-btn am-on' : 'automerge-btn am-off';
-        btn.textContent = autoMergeOn ? 'Auto Merge ✓' : 'Auto Merge';
-        btn.title       = autoMergeOn ? 'Automerge enabled — click to disable' : 'Enable automerge (creates PR if needed)';
-        btn.addEventListener('click', () => toggleAutoMergeBranch(repo, branch, btn));
+      if (!isDefaultBranch) {
+        const autoMergeOn = pr !== null && pr.auto_merge != null;
+        const btn = document.createElement('button');
+        if (branchSt === 'success') {
+          btn.className   = 'merge-btn';
+          btn.textContent = 'Merge';
+          btn.title       = `Squash-merge ${branch}`;
+          btn.addEventListener('click', () => mergeBranch(repo, branch, btn));
+        } else {
+          btn.className   = autoMergeOn ? 'automerge-btn am-on' : 'automerge-btn am-off';
+          btn.textContent = autoMergeOn ? 'Auto Merge ✓' : 'Auto Merge';
+          btn.title       = autoMergeOn ? 'Automerge enabled — click to disable' : 'Enable automerge (creates PR if needed)';
+          btn.addEventListener('click', () => toggleAutoMergeBranch(repo, branch, btn));
+        }
+        row.appendChild(btn);
       }
 
-      hdr.appendChild(dot);
-      hdr.appendChild(label);
-      if (!isDefaultBranch) hdr.appendChild(btn);
-      group.appendChild(hdr);
-
-      // Run lines
-      Object.entries(latestByWf).forEach(([wfName, run]) => group.appendChild(buildRunLine(run, wfName)));
-
-      return group;
-    }
-
-    function buildRunLine(run, wfName) {
-      const st    = runSt(run);
-      const a     = document.createElement('a');
-      a.className = `run-line ${st}`;
-      a.href      = run.html_url;
-      a.target    = '_blank';
-      a.rel       = 'noopener';
-
-      const dot = document.createElement('span');
-      dot.className = `dot ${st}`;
-
-      const dur   = formatDuration(run);
-      const title = run.display_title || run.head_commit?.message?.split('\n')[0] || wfName;
-      const meta  = `${wfName} #${run.run_number}${dur ? ` · ${dur}` : ''} · ${timeAgo(run.created_at)}`;
-
-      const info = document.createElement('span');
-      info.className = 'run-line-info';
-
-      const titleEl = document.createElement('span');
-      titleEl.className   = 'run-line-title';
-      titleEl.textContent = title;
-
-      const metaEl = document.createElement('span');
-      metaEl.className   = 'run-line-meta';
-      metaEl.textContent = meta;
-
-      info.appendChild(titleEl);
-      info.appendChild(metaEl);
-      a.appendChild(dot);
-      a.appendChild(info);
-      return a;
+      return row;
     }
 
     // ── Merge / automerge (lazy PR fetch) ────────────────────────────────────
