@@ -1468,13 +1468,20 @@
       return MOODS.find(m => rate >= m.min) || MOODS[MOODS.length - 1];
     }
 
+    function isToday(d) {
+      const x = new Date(d), n = new Date();
+      return x.getFullYear() === n.getFullYear() && x.getMonth() === n.getMonth() && x.getDate() === n.getDate();
+    }
+
     function updateMoodAndStats() {
-      const allEntries  = Object.values(allPRData).flat();
-      const openEntries = allEntries.filter(e => !e.pr.merged_at);
+      const allEntries    = Object.values(allPRData).flat();
+      const openEntries   = allEntries.filter(e => !e.pr.merged_at);
+      const mergedToday   = allEntries.filter(e => e.pr.merged_at && isToday(e.pr.merged_at));
       if (!allEntries.length) return;
 
-      const total = openEntries.length;
-      const ready = openEntries.filter(e => prStatus(e) === 'success').length;
+      // Merged-today PRs count as wins in the mood calculation
+      const total = openEntries.length + mergedToday.length;
+      const ready = openEntries.filter(e => prStatus(e) === 'success').length + mergedToday.length;
       const rate  = total === 0 ? 0.5 : ready / total;
       const mood  = calcMood(rate);
 
@@ -1489,9 +1496,10 @@
       document.getElementById('mood-label').textContent = mood.label;
 
       const pill = document.getElementById('stats-pill');
-      pill.textContent = total === 0
-        ? 'No open PRs'
-        : `${ready} / ${total} PRs ready`;
+      const parts = [];
+      if (ready - mergedToday.length > 0) parts.push(`${ready - mergedToday.length} ready`);
+      if (mergedToday.length > 0) parts.push(`${mergedToday.length} merged today`);
+      pill.textContent = parts.length ? parts.join(' · ') : (openEntries.length ? '0 ready' : 'No open PRs');
 
       if (msgState.mood !== mood) {
         msgState.mood = mood;
