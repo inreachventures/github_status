@@ -241,20 +241,7 @@
       background: rgba(130,80,223,0.08);
       white-space: nowrap;
     }
-    .draft-badge {
-      font-size: 0.58rem;
-      font-weight: 700;
-      color: #445;
-      flex-shrink: 0;
-      padding: 2px 6px;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 5px;
-      background: transparent;
-      white-space: nowrap;
-    }
-    .pr-row.draft { border-left-color: #2a2f3a; opacity: 0.65; }
-
-    /* ── No-PR separator ── */
+/* ── No-PR separator ── */
     .no-pr-sep {
       display: flex;
       align-items: center;
@@ -1048,7 +1035,7 @@
         const allPRs  = await fetchRepoPRs(repo);
         const cutoff  = Date.now() - 48 * 3600 * 1000;
         const prs     = allPRs.filter(pr =>
-          pr.state === 'open' ||
+          (!pr.draft && pr.state === 'open') ||
           (pr.merged_at && new Date(pr.merged_at).getTime() > cutoff)
         );
 
@@ -1133,8 +1120,7 @@
       }
 
       const sortOrder = e => {
-        if (e.pr.merged_at)  return 5;
-        if (e.pr.draft)      return 4;
+        if (e.pr.merged_at) return 4;
         return { success: 0, running: 1, failure: 2, other: 3 }[prStatus(e)] ?? 3;
       };
       const sorted = [...entries].sort((a, b) => {
@@ -1165,8 +1151,7 @@
     function buildPRRow(repo, entry) {
       const { pr, branchRuns, masterRuns } = entry;
       const isMerged = !!pr.merged_at;
-      const isDraft  = !!pr.draft;
-      const st       = isMerged ? 'merged' : isDraft ? 'draft' : prStatus(entry);
+      const st       = isMerged ? 'merged' : prStatus(entry);
       const wfNames  = Object.keys(branchRuns);
 
       const row  = document.createElement('div');
@@ -1213,11 +1198,6 @@
         const badge = document.createElement('span');
         badge.className   = 'merged-badge';
         badge.textContent = 'Merged ✓';
-        actionEl = badge;
-      } else if (isDraft) {
-        const badge = document.createElement('span');
-        badge.className   = 'draft-badge';
-        badge.textContent = 'Draft';
         actionEl = badge;
       } else {
         const btn = document.createElement('button');
