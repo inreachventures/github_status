@@ -159,6 +159,15 @@
     .branch-dot.failure { background: #ff4757; box-shadow: 0 0 7px rgba(255,71,87,0.6); }
     .branch-dot.running { background: #ffd43b; animation: pulse 1.4s ease-in-out infinite; }
     .branch-dot.other   { background: #3a3a4a; }
+    .branch-dot.merged  { background: #a371f7; box-shadow: 0 0 5px rgba(163,113,247,0.45); }
+
+    .merged-badge {
+      font-size: 0.57rem;
+      font-weight: 600;
+      color: #7a5ea0;
+      letter-spacing: 0.03em;
+      flex-shrink: 0;
+    }
 
     .branch-name {
       font-size: 0.65rem;
@@ -1018,8 +1027,13 @@
       const row = document.createElement('div');
       row.className = 'branch-row';
 
+      const activeBranches = allRunsByRepo[repo]?.activeBranches;
+      const branchExists   = !activeBranches || activeBranches.size === 0 || activeBranches.has(branch);
+      const isDefaultBranch = /^(main|master|develop|development)$/.test(branch);
+      const isMerged       = !isDefaultBranch && !branchExists;
+
       const dot = document.createElement('span');
-      dot.className = `branch-dot ${branchSt}`;
+      dot.className = `branch-dot ${isMerged ? 'merged' : branchSt}`;
 
       const pr = prCache[repo]?.[branch] ?? null;
       const runUrl = newestRun?.html_url || '#';
@@ -1044,10 +1058,12 @@
       row.appendChild(commitEl);
       row.appendChild(timeEl);
 
-      const isDefaultBranch = /^(main|master|develop|development)$/.test(branch);
-      const activeBranches  = allRunsByRepo[repo]?.activeBranches;
-      const branchExists    = !activeBranches || activeBranches.size === 0 || activeBranches.has(branch);
-      if (!isDefaultBranch && branchExists) {
+      if (isMerged) {
+        const badge = document.createElement('span');
+        badge.className   = 'merged-badge';
+        badge.textContent = 'Merged';
+        row.appendChild(badge);
+      } else if (!isDefaultBranch) {
         const autoMergeOn = pr !== null && pr.auto_merge != null;
         const btn = document.createElement('button');
         if (branchSt === 'success') {
