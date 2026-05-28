@@ -698,6 +698,22 @@
     #settings-save:hover  { background: rgba(0,212,170,0.22); }
     #settings-save:active { transform: scale(0.98); }
 
+    #reset-btn {
+      width: 100%;
+      background: none;
+      border: 1px solid rgba(248,81,73,0.4);
+      border-radius: 10px;
+      color: #f85149;
+      font-size: 0.7rem;
+      font-family: inherit;
+      padding: 7px;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.15s;
+      margin-top: 6px;
+    }
+    #reset-btn:hover { background: rgba(248,81,73,0.1); }
+
   </style>
 </head>
 <body>
@@ -762,6 +778,7 @@
       </div>
 
       <button id="settings-save" onclick="saveSettings()">Save &amp; Refresh</button>
+      <button id="reset-btn" onclick="resetAllData()">Reset all data</button>
     </div>
   </div>
 
@@ -1588,6 +1605,14 @@
 
     function closeSettings() {
       document.getElementById('settings-overlay').classList.remove('open');
+    }
+
+    function resetAllData() {
+      if (!confirm('Remove your token, org, and all monitored repos?')) return;
+      localStorage.removeItem('gh_token');
+      localStorage.removeItem('gh_org');
+      localStorage.removeItem('gh_repos');
+      location.reload();
     }
 
     function overlayClick(e) {
