@@ -28,9 +28,11 @@ Then open `http://localhost:8765` in your browser.
 - Click any run to open it in GitHub
 - Installable as a standalone macOS/Windows/Linux app via Chrome PWA
 
-## Install as a desktop app (optional)
+## Install as a desktop app (recommended)
 
-Serve the app over HTTP (see above), open it in Chrome, then click the install icon (⊕) in the address bar → **Install**. After that, the app runs standalone and the server can be stopped.
+Serve the app over HTTP (see above), open it in Chrome, then click the install icon (⊕) in the address bar → **Install**.
+
+![Install app](install_app_image.png)
 
 ## Layout
 
