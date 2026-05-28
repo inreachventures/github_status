@@ -8,6 +8,12 @@ Open **[github.inreachventures.com](https://github.inreachventures.com)** — no
 
 You'll be asked for a GitHub Personal Access Token on first run. [Create one here](https://github.com/settings/tokens/new?description=github_status%20dashboard&scopes=repo,workflow,read:org) with `repo`, `workflow`, and `read:org` scopes. Your token is stored only in your browser's local storage — nothing is sent to any server.
 
+## Install as a desktop app (recommended)
+
+Open the app in Chrome, then click the install icon (⊕) in the address bar → **Install**.
+
+![Install app](install_app_image.png)
+
 ## Run it yourself (local Python server)
 
 If you'd rather host it yourself:
@@ -27,12 +33,6 @@ Then open `http://localhost:8765` in your browser.
 - Mood indicator based on overall build health
 - Click any run to open it in GitHub
 - Installable as a standalone macOS/Windows/Linux app via Chrome PWA
-
-## Install as a desktop app (recommended)
-
-Serve the app over HTTP (see above), open it in Chrome, then click the install icon (⊕) in the address bar → **Install**.
-
-![Install app](install_app_image.png)
 
 ## Layout
 
