@@ -296,6 +296,7 @@
     .merge-btn:disabled { opacity: 0.4; pointer-events: none; }
     .merge-btn.merged   { background: transparent; border-color: rgba(130,80,223,0.15); color: #7a5ea0; cursor: default; }
     .merge-btn.error    { background: rgba(220,50,50,0.15); border-color: rgba(220,50,50,0.5); color: #e06060; }
+    .merge-btn.queued   { background: rgba(0,150,220,0.15); border-color: rgba(0,150,220,0.5); color: #4db8ff; cursor: default; }
 
     /* ── Footer ── */
     #footer {
@@ -1123,12 +1124,56 @@
     }
 
     // ── Merge / automerge (lazy PR fetch) ────────────────────────────────────
+    async function createPRForBranch(repo, branch) {
+      const org = getOrg();
+      const latestRun = Object.values(allRunsByRepo[repo]?.runsByWf || {})
+        .flatMap(runs => runs)
+        .filter(r => r.head_branch === branch)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+      const title = latestRun?.display_title || latestRun?.head_commit?.message?.split('\n')[0] || branch;
+      const base  = repoDefaultBranch[repo] || 'main';
+
+      const res = await fetch(`https://api.github.com/repos/${org}/${repo}/pulls`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json', Accept: 'application/vnd.github+json' },
+        body: JSON.stringify({ title, head: branch, base, body: '' }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || res.status);
+      }
+      const pr = await res.json();
+      if (!prCache[repo]) prCache[repo] = {};
+      prCache[repo][branch] = pr;
+      return pr;
+    }
+
+    async function setPRAutoMerge(pr, enabling) {
+      const query = enabling
+        ? `mutation($id:ID!){enablePullRequestAutoMerge(input:{pullRequestId:$id,mergeMethod:SQUASH}){pullRequest{number}}}`
+        : `mutation($id:ID!){disablePullRequestAutoMerge(input:{pullRequestId:$id}){pullRequest{number}}}`;
+
+      const res = await fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, variables: { id: pr.node_id } }),
+      });
+      const json = await res.json();
+      if (json.errors?.length) throw new Error(json.errors[0].message);
+    }
+
     async function mergeBranch(repo, branch, btn) {
       btn.disabled    = true;
       btn.textContent = '…';
       try {
-        const pr = await fetchPRForBranch(repo, branch);
-        if (!pr) throw new Error('No open PR for this branch');
+        let pr = prCache[repo]?.[branch] ?? await fetchPRForBranch(repo, branch);
+
+        // No open PR yet — create one so there's something to merge/automerge.
+        if (!pr) {
+          btn.textContent = 'Creating PR…';
+          pr = await createPRForBranch(repo, branch);
+        }
+
         const res = await fetch(
           `https://api.github.com/repos/${getOrg()}/${repo}/pulls/${pr.number}/merge`,
           {
@@ -1137,13 +1182,29 @@
             body: JSON.stringify({ merge_method: 'squash' }),
           }
         );
-        if (!res.ok && res.status !== 405) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.message || res.status);
+
+        if (res.ok) {
+          btn.className   = 'merge-btn merged';
+          btn.textContent = 'Merged ✓';
+          btn.disabled    = true;
+          return;
         }
-        btn.className   = 'merge-btn merged';
-        btn.textContent = 'Merged ✓';
-        btn.disabled    = true;
+
+        const body = await res.json().catch(() => ({}));
+
+        // 405 = not mergeable right now (branch protection: required reviews/checks).
+        // Fall back to GitHub's native auto-merge so it lands as soon as those pass.
+        if (res.status === 405) {
+          await setPRAutoMerge(pr, true);
+          prCache[repo][branch] = { ...pr, auto_merge: { enabled: true } };
+          btn.className   = 'merge-btn queued';
+          btn.textContent = 'Queued ✓';
+          btn.title       = 'Branch protection blocked a direct merge — auto-merge enabled on the PR instead';
+          btn.disabled    = true;
+          return;
+        }
+
+        throw new Error(body.message || res.status);
       } catch(e) {
         btn.disabled    = false;
         btn.className   = 'merge-btn error';
@@ -1158,7 +1219,6 @@
 
     async function toggleAutoMergeBranch(repo, branch, btn) {
       btn.disabled = true;
-      const org = getOrg();
 
       try {
         let pr = prCache[repo]?.[branch] ?? null;
@@ -1167,41 +1227,12 @@
         if (!pr) {
           btn.className   = 'automerge-btn am-creating';
           btn.textContent = 'Creating PR…';
-
-          const latestRun = Object.values(allRunsByRepo[repo]?.runsByWf || {})
-            .flatMap(runs => runs)
-            .filter(r => r.head_branch === branch)
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-          const title = latestRun?.display_title || latestRun?.head_commit?.message?.split('\n')[0] || branch;
-          const base  = repoDefaultBranch[repo] || 'main';
-
-          const createRes = await fetch(`https://api.github.com/repos/${org}/${repo}/pulls`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json', Accept: 'application/vnd.github+json' },
-            body: JSON.stringify({ title, head: branch, base, body: '' }),
-          });
-          if (!createRes.ok) {
-            const body = await createRes.json().catch(() => ({}));
-            throw new Error(body.message || createRes.status);
-          }
-          pr = await createRes.json();
-          if (!prCache[repo]) prCache[repo] = {};
-          prCache[repo][branch] = pr;
+          pr = await createPRForBranch(repo, branch);
         }
 
         // Toggle automerge on the PR
         const enabling = pr.auto_merge == null;
-        const query    = enabling
-          ? `mutation($id:ID!){enablePullRequestAutoMerge(input:{pullRequestId:$id,mergeMethod:SQUASH}){pullRequest{number}}}`
-          : `mutation($id:ID!){disablePullRequestAutoMerge(input:{pullRequestId:$id}){pullRequest{number}}}`;
-
-        const gqlRes = await fetch('https://api.github.com/graphql', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query, variables: { id: pr.node_id } }),
-        });
-        const json = await gqlRes.json();
-        if (json.errors?.length) throw new Error(json.errors[0].message);
+        await setPRAutoMerge(pr, enabling);
 
         // Update local cache to reflect new state
         prCache[repo][branch] = { ...pr, auto_merge: enabling ? { enabled: true } : null };
