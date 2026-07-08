@@ -1,0 +1,27 @@
+{
+  "url": "https://api.github.com/repos/acme-org/example-repo/pulls/144",
+  "id": 4014972226,
+  "node_id": "PR_kwDOAAAAAAAAAAAA",
+  "html_url": "https://github.com/acme-org/example-repo/pull/144",
+  "number": 144,
+  "state": "open",
+  "title": "feature-branch",
+  "body": null,
+  "merged": false,
+  "mergeable": true,
+  "mergeable_state": "clean",
+  "auto_merge": {
+    "enabled_by": { "login": "some-user" },
+    "merge_method": "squash",
+    "commit_title": "feature-branch (#144)",
+    "commit_message": ""
+  },
+  "head": {
+    "ref": "feature-branch",
+    "sha": "0000000000000000000000000000000000000a"
+  },
+  "base": {
+    "ref": "main",
+    "sha": "0000000000000000000000000000000000000b"
+  }
+}
