@@ -295,6 +295,7 @@
     .merge-btn:hover    { background: rgba(130,80,223,0.28); }
     .merge-btn:disabled { opacity: 0.4; pointer-events: none; }
     .merge-btn.merged   { background: transparent; border-color: rgba(130,80,223,0.15); color: #7a5ea0; cursor: default; }
+    .merge-btn.error    { background: rgba(220,50,50,0.15); border-color: rgba(220,50,50,0.5); color: #e06060; }
 
     /* ── Footer ── */
     #footer {
@@ -1145,8 +1146,13 @@
         btn.disabled    = true;
       } catch(e) {
         btn.disabled    = false;
-        btn.textContent = 'Merge';
-        btn.title       = `Error: ${e.message}`;
+        btn.className   = 'merge-btn error';
+        btn.textContent = `✕ ${e.message}`;
+        btn.title       = e.message;
+        setTimeout(() => {
+          btn.className   = 'merge-btn';
+          btn.textContent = 'Merge';
+        }, 5000);
       }
     }
 
