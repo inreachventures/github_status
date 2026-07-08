@@ -128,7 +128,7 @@ async function toggleAutoMergeBranch(repo, branch, btn) {
   btn.disabled = true;
 
   try {
-    let pr = prCache[repo]?.[branch] ?? null;
+    let pr = prCache[repo]?.[branch] ?? await fetchPRForBranch(repo, branch);
 
     // No open PR — create one first
     if (!pr) {
