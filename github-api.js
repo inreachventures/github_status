@@ -31,6 +31,11 @@ async function fetchPRForBranch(repo, branch) {
   return data[0] || null;
 }
 
+// Tunable knobs for the create-PR retry below — a plain object (not a bare
+// constant) so tests can lower prCreateRetryDelayMs without waiting for real
+// timers.
+const retryConfig = { prCreateRetryDelayMs: 5000 };
+
 async function createPRForBranch(repo, branch) {
   const org = getOrg();
   const latestRun = Object.values(allRunsByRepo[repo]?.runsByWf || {})
@@ -40,16 +45,37 @@ async function createPRForBranch(repo, branch) {
   const title = latestRun?.display_title || latestRun?.head_commit?.message?.split('\n')[0] || branch;
   const base  = repoDefaultBranch[repo] || 'main';
 
-  const res = await fetch(`https://api.github.com/repos/${org}/${repo}/pulls`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json', Accept: 'application/vnd.github+json' },
-    body: JSON.stringify({ title, head: branch, base, body: '' }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || res.status);
+  const attemptCreate = async () => {
+    const res = await fetch(`https://api.github.com/repos/${org}/${repo}/pulls`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json', Accept: 'application/vnd.github+json' },
+      body: JSON.stringify({ title, head: branch, base, body: '' }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || res.status);
+    }
+    return res.json();
+  };
+
+  let pr;
+  try {
+    pr = await attemptCreate();
+  } catch (createErr) {
+    // GitHub's PR-list read path can lag PR creation, so a moment ago we may
+    // have seen "no PR" for a branch that already has one (the create call
+    // then fails with "already exists"). Give the read path a moment to
+    // catch up and check again before giving up — this also covers a
+    // genuine creation failure, which will still find nothing on re-check.
+    await new Promise(resolve => setTimeout(resolve, retryConfig.prCreateRetryDelayMs));
+    try {
+      pr = await fetchPRForBranch(repo, branch);
+    } catch {
+      pr = null;
+    }
+    if (!pr) throw createErr;
   }
-  const pr = await res.json();
+
   if (!prCache[repo]) prCache[repo] = {};
   prCache[repo][branch] = pr;
   return pr;
@@ -159,7 +185,7 @@ async function toggleAutoMergeBranch(repo, branch, btn) {
 // Node (tests) — browser <script src> just leaves these as globals.
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    prCache, allRunsByRepo, repoDefaultBranch,
+    prCache, allRunsByRepo, repoDefaultBranch, retryConfig,
     getToken, getOrg, ghFetch, fetchPRForBranch,
     createPRForBranch, setPRAutoMerge, mergeBranch, toggleAutoMergeBranch,
   };
