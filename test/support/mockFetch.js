@@ -22,7 +22,11 @@ function loadApi({ token = 'test-token', org = 'acme-org' } = {}) {
   const apiPath = require.resolve('../../github-api.js');
   delete require.cache[apiPath];
   const store = { gh_token: token, gh_org: org };
-  global.localStorage = { getItem: k => store[k] ?? null };
+  global.localStorage = {
+    getItem: k => store[k] ?? null,
+    setItem: (k, v) => { store[k] = String(v); },
+    removeItem: k => { delete store[k]; },
+  };
   return require(apiPath);
 }
 

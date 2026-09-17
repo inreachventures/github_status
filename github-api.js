@@ -182,11 +182,64 @@ async function toggleAutoMergeBranch(repo, branch, btn) {
   }
 }
 
+// ── Daily build records ─────────────────────────────────────────────────────
+// A local-only history of how many builds passed on each day, so the header
+// can celebrate when today gets close to — or beats — the all-time high.
+const RECORDS_KEY  = 'gh_daily_records';
+const RECORDS_DAYS = 90;   // how many days of history we keep
+const RECORD_NEAR  = 0.9;  // "approaching the record" threshold
+
+function dayKey(d = new Date()) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function loadDailyRecords() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RECORDS_KEY) || '{}');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch(e) {
+    return {};
+  }
+}
+
+function saveDailyRecords(days) {
+  const trimmed = {};
+  Object.keys(days).sort().slice(-RECORDS_DAYS).forEach(k => { trimmed[k] = days[k]; });
+  try { localStorage.setItem(RECORDS_KEY, JSON.stringify(trimmed)); } catch(e) { /* private mode */ }
+  return trimmed;
+}
+
+// How today compares with the best *previous* day. Today is excluded from the
+// record itself, otherwise it would forever be chasing its own count.
+function recordTier(count, best) {
+  if (!best || !count) return null;
+  if (count > best)                 return 'record';
+  if (count === best)               return 'tied';
+  if (count >= best * RECORD_NEAR)  return 'approaching';
+  return null;
+}
+
+// Stores today's passing-build count and reports where it lands.
+function recordDailyPasses(count, today = dayKey()) {
+  const days = loadDailyRecords();
+  days[today] = Math.max(count, days[today] || 0);
+  const saved = saveDailyRecords(days);
+
+  let best = 0, bestDay = null;
+  Object.keys(saved).forEach(day => {
+    if (day !== today && saved[day] > best) { best = saved[day]; bestDay = day; }
+  });
+
+  return { today: saved[today], best, bestDay, tier: recordTier(saved[today], best) };
+}
+
 // Node (tests) — browser <script src> just leaves these as globals.
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     prCache, allRunsByRepo, repoDefaultBranch, retryConfig,
     getToken, getOrg, ghFetch, fetchPRForBranch,
     createPRForBranch, setPRAutoMerge, mergeBranch, toggleAutoMergeBranch,
+    dayKey, loadDailyRecords, saveDailyRecords, recordTier, recordDailyPasses,
   };
 }
