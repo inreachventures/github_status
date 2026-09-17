@@ -88,6 +88,23 @@
       color: #7ecfb8;
       font-weight: 600;
     }
+    #record-badge {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid currentColor;
+      white-space: nowrap;
+    }
+    #record-badge.rec-record      { color: #ffd76e; animation: recordGlow 1.6s ease-in-out infinite; }
+    #record-badge.rec-tied        { color: #ffb86b; animation: recordGlow 2.4s ease-in-out infinite; }
+    #record-badge.rec-approaching { color: #ff8f6b; }
+    @keyframes recordGlow {
+      0%, 100% { box-shadow: 0 0 0 rgba(255, 215, 110, 0); transform: scale(1); }
+      50%      { box-shadow: 0 0 16px rgba(255, 215, 110, 0.55); transform: scale(1.04); }
+    }
 
     /* ── Mantra ── */
     #stats-bar {
@@ -799,6 +816,7 @@
     <span id="stats-pill">Fetching builds…</span>
     <span id="mood-emoji">⏳</span>
     <span id="mood-label">Loading…</span>
+    <span id="record-badge" style="display:none"></span>
   </div>
 
   <div id="stats-bar">
@@ -865,6 +883,41 @@
         ]
       },
     ];
+
+    // Celebration pools for the daily passing-build record. `random: true` makes
+    // the rotation pick a message at random instead of cycling in order.
+    const RECORD_MOODS = {
+      record: {
+        emoji: '🏆', label: 'All-time high', random: true,
+        msgs: [
+          'NEW RECORD! 🏆 More green builds today than any day ever.',
+          'ALL TIME HIGH! 🚀 Nobody has ever shipped this hard here.',
+          'What a productive day!!! 🎉 The record just got smashed.',
+          'Record broken! 🥳 Someone put this pipeline in a museum.',
+          'Peak performance unlocked! 🌟 New personal best for the team.',
+          'History made! 📈 Today is officially the greenest day on record.',
+        ]
+      },
+      tied: {
+        emoji: '🥇', label: 'Matching the record', random: true,
+        msgs: [
+          'Tied the all-time high! 🥇 One more green and it\'s yours.',
+          'Dead level with the record 🤝 — break the tie, ship one more!',
+          'Matching your best day ever! 🔥 The record is on the ropes.',
+          'All-time high equalled! 🎯 History is one build away.',
+        ]
+      },
+      approaching: {
+        emoji: '🔥', label: 'Record in sight', random: true,
+        msgs: [
+          'Closing in on the all-time high 🔥 — keep them coming!',
+          '90% of the way to a record day ⚡ Don\'t stop now!',
+          'The record can smell you from here 👀 A few more greens!',
+          'Record watch: ON 📊 Today could be the best day yet.',
+          'So close to the all-time high — one good push! 💪',
+        ]
+      },
+    };
 
     let msgState      = { mood: null, idx: 0 };
     let msgTimer      = null;
@@ -1159,27 +1212,56 @@
       emojiEl.textContent = mood.emoji;
       document.getElementById('mood-label').textContent = mood.label;
 
+      // Keep the daily history up to date and see where today lands against it.
+      const rec    = recordDailyPasses(todayOk);
+      const recMsg = rec.tier ? RECORD_MOODS[rec.tier] : null;
+
       const pill = document.getElementById('stats-pill');
+      const best = rec.best ? ` · best ${rec.best}` : '';
       pill.textContent = todayAll.length === 0
         ? 'No builds today yet'
-        : `${todayOk} / ${todayAll.length} builds passing today`;
+        : `${todayOk} / ${todayAll.length} builds passing today${best}`;
 
-      if (msgState.mood !== mood) {
-        msgState.mood = mood;
-        msgState.idx  = 0;
+      const badge = document.getElementById('record-badge');
+      if (recMsg) {
+        badge.textContent   = `${recMsg.emoji} ${recMsg.label}`;
+        badge.className     = `rec-${rec.tier}`;
+        badge.title         = rec.bestDay
+          ? `Previous best: ${rec.best} passing builds on ${rec.bestDay}`
+          : '';
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
+
+      // A record in progress takes over the message line from the mood pool.
+      const pool = recMsg || mood;
+      if (msgState.mood !== pool) {
+        msgState.mood = pool;
+        msgState.idx  = nextMsgIdx(pool, -1);
         if (msgTimer) clearInterval(msgTimer);
-        showMsg(mood, 0);
+        showMsg(pool, msgState.idx);
         msgTimer = setInterval(() => {
-          msgState.idx = (msgState.idx + 1) % mood.msgs.length;
-          showMsg(mood, msgState.idx);
+          msgState.idx = nextMsgIdx(pool, msgState.idx);
+          showMsg(pool, msgState.idx);
         }, MSG_ROTATE_MS);
       }
     }
 
-    function showMsg(mood, idx) {
+    // Mood pools cycle in order; celebration pools pick at random, never
+    // repeating the message that is already on screen.
+    function nextMsgIdx(pool, idx) {
+      if (!pool.random) return (idx + 1) % pool.msgs.length;
+      if (pool.msgs.length < 2) return 0;
+      let next;
+      do { next = Math.floor(Math.random() * pool.msgs.length); } while (next === idx);
+      return next;
+    }
+
+    function showMsg(pool, idx) {
       const el = document.getElementById('motivational-msg');
       el.classList.remove('entering');
-      el.textContent = mood.msgs[idx];
+      el.textContent = pool.msgs[idx];
       el.classList.add('entering');
     }
 
@@ -1512,10 +1594,11 @@
     }
 
     function resetAllData() {
-      if (!confirm('Remove your token, org, and all monitored repos?')) return;
+      if (!confirm('Remove your token, org, monitored repos, and daily build records?')) return;
       localStorage.removeItem('gh_token');
       localStorage.removeItem('gh_org');
       localStorage.removeItem('gh_repos');
+      localStorage.removeItem('gh_daily_records');
       location.reload();
     }
 
