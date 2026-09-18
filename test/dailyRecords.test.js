@@ -73,3 +73,35 @@ test('dayKey: local-date key, zero padded', () => {
   const api = loadApi();
   assert.equal(api.dayKey(new Date(2026, 8, 7)), '2026-09-07');
 });
+
+test('allTimeRecord: the best day of the whole history, today included', () => {
+  const api = loadApi();
+  seed(api, { '2026-09-15': 8, '2026-09-16': 10, [TODAY]: 12 });
+  assert.deepEqual(api.allTimeRecord(), { count: 12, day: TODAY });
+});
+
+test('allTimeRecord: ties go to the day that got there first', () => {
+  const api = loadApi();
+  seed(api, { '2026-09-16': 10, '2026-09-15': 10, '2026-09-14': 3 });
+  assert.deepEqual(api.allTimeRecord(), { count: 10, day: '2026-09-15' });
+});
+
+test('allTimeRecord: empty history has no record to show', () => {
+  const api = loadApi();
+  assert.deepEqual(api.allTimeRecord(), { count: 0, day: null });
+});
+
+test('recordDailyPasses: reports the all-time high alongside the mark to beat', () => {
+  const api = loadApi();
+  seed(api, { '2026-09-16': 10 });
+
+  // Today breaks it: it is the record from the moment it does, while `best`
+  // stays on the older day today was chasing.
+  const rec = api.recordDailyPasses(12, TODAY);
+  assert.equal(rec.best, 10);
+  assert.deepEqual(rec.allTime, { count: 12, day: TODAY });
+
+  // A quieter day leaves the all-time high where it was.
+  const quiet = api.recordDailyPasses(4, '2026-09-18');
+  assert.deepEqual(quiet.allTime, { count: 12, day: TODAY });
+});

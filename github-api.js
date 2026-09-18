@@ -220,6 +220,19 @@ function recordTier(count, best) {
   return null;
 }
 
+// The best day in the whole history, today included — what the all-time-high
+// display shows. `best`/`bestDay` below deliberately leave today out because
+// they are the mark today is chasing; this one is the mark itself, so a day
+// that breaks the record is the record from the moment it does. Ties go to the
+// day that got there first.
+function allTimeRecord(days = loadDailyRecords()) {
+  let count = 0, day = null;
+  Object.keys(days).sort().forEach(d => {
+    if (days[d] > count) { count = days[d]; day = d; }
+  });
+  return { count, day };
+}
+
 // Stores today's passing-build count and reports where it lands.
 function recordDailyPasses(count, today = dayKey()) {
   const days = loadDailyRecords();
@@ -231,7 +244,11 @@ function recordDailyPasses(count, today = dayKey()) {
     if (day !== today && saved[day] > best) { best = saved[day]; bestDay = day; }
   });
 
-  return { today: saved[today], best, bestDay, tier: recordTier(saved[today], best) };
+  return {
+    today: saved[today], best, bestDay,
+    tier: recordTier(saved[today], best),
+    allTime: allTimeRecord(saved),
+  };
 }
 
 // Node (tests) — browser <script src> just leaves these as globals.
@@ -241,5 +258,6 @@ if (typeof module !== 'undefined' && module.exports) {
     getToken, getOrg, ghFetch, fetchPRForBranch,
     createPRForBranch, setPRAutoMerge, mergeBranch, toggleAutoMergeBranch,
     dayKey, loadDailyRecords, saveDailyRecords, recordTier, recordDailyPasses,
+    allTimeRecord,
   };
 }

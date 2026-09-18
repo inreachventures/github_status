@@ -101,6 +101,35 @@
     #record-badge.rec-record      { color: #ffd76e; animation: recordGlow 1.6s ease-in-out infinite; }
     #record-badge.rec-tied        { color: #ffb86b; animation: recordGlow 2.4s ease-in-out infinite; }
     #record-badge.rec-approaching { color: #ff8f6b; }
+    /* ── All-time high ── */
+    #record-line {
+      text-align: center;
+      margin-top: 8px;
+      animation: fadeInUp 0.5s ease 0.05s both;
+    }
+    #all-time-record {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #b08d4a;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 215, 110, 0.28);
+      background: rgba(255, 215, 110, 0.06);
+    }
+    #all-time-record strong { color: #ffd76e; font-size: 0.95rem; font-weight: 800; }
+    #all-time-record .atr-day { color: #8b949e; text-transform: none; letter-spacing: 0.02em; }
+    /* Today *is* the record — light it up like the header badge. */
+    #all-time-record.atr-live {
+      color: #ffd76e;
+      border-color: rgba(255, 215, 110, 0.6);
+      animation: recordGlow 1.6s ease-in-out infinite;
+    }
+    #all-time-record.atr-live .atr-day { color: #ffd76e; }
     @keyframes recordGlow {
       0%, 100% { box-shadow: 0 0 0 rgba(255, 215, 110, 0); transform: scale(1); }
       50%      { box-shadow: 0 0 16px rgba(255, 215, 110, 0.55); transform: scale(1.04); }
@@ -819,6 +848,10 @@
     <span id="record-badge" style="display:none"></span>
   </div>
 
+  <div id="record-line">
+    <span id="all-time-record" style="display:none"></span>
+  </div>
+
   <div id="stats-bar">
     <div id="motivational-msg"></div>
   </div>
@@ -1192,6 +1225,31 @@
       return MOODS.find(m => rate >= m.min) || MOODS[MOODS.length - 1];
     }
 
+    // '2026-09-17' → '17 Sep 2026'. Parsed field by field rather than with
+    // `new Date(key)`, which would read the key as UTC and can land on the
+    // previous day west of Greenwich.
+    function formatDayKey(key) {
+      const [y, m, d] = key.split('-').map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+        day: 'numeric', month: 'short', year: 'numeric',
+      });
+    }
+
+    // The all-time high, always on screen once there is any history to show.
+    function renderAllTimeRecord(allTime) {
+      const el = document.getElementById('all-time-record');
+      if (!allTime?.count) { el.style.display = 'none'; return; }
+
+      const isTodays = allTime.day === dayKey();
+      const when     = isTodays ? 'today' : `on ${formatDayKey(allTime.day)}`;
+      el.innerHTML   = `🏆 All-time high <strong>${allTime.count}</strong> passing builds <span class="atr-day">${when}</span>`;
+      el.classList.toggle('atr-live', isTodays);
+      el.title = isTodays
+        ? 'Today holds the record for passing builds in a day'
+        : `Best day so far: ${allTime.count} passing builds on ${allTime.day}`;
+      el.style.display = '';
+    }
+
     function updateMoodAndStats() {
       const flat = Object.values(allRunsByRepo).flatMap(({ runsByWf = {} }) => Object.values(runsByWf).flat());
       if (!flat.length) return;
@@ -1217,10 +1275,11 @@
       const recMsg = rec.tier ? RECORD_MOODS[rec.tier] : null;
 
       const pill = document.getElementById('stats-pill');
-      const best = rec.best ? ` · best ${rec.best}` : '';
       pill.textContent = todayAll.length === 0
         ? 'No builds today yet'
-        : `${todayOk} / ${todayAll.length} builds passing today${best}`;
+        : `${todayOk} / ${todayAll.length} builds passing today`;
+
+      renderAllTimeRecord(rec.allTime);
 
       const badge = document.getElementById('record-badge');
       if (recMsg) {
@@ -1675,6 +1734,9 @@
     // ── Init ─────────────────────────────────────────────────────────────────
     async function init() {
       REPOS = getRepos();
+      // Straight from stored history, so the all-time high is on screen before
+      // the first fetch lands (and even if there are no builds to show today).
+      renderAllTimeRecord(allTimeRecord());
       if (!getToken() || !getOrg() || !REPOS.length) {
         openSettings();
         return;
