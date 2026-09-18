@@ -101,35 +101,34 @@
     #record-badge.rec-record      { color: #ffd76e; animation: recordGlow 1.6s ease-in-out infinite; }
     #record-badge.rec-tied        { color: #ffb86b; animation: recordGlow 2.4s ease-in-out infinite; }
     #record-badge.rec-approaching { color: #ff8f6b; }
-    /* ── All-time high ── */
-    #record-line {
-      text-align: center;
-      margin-top: 8px;
-      animation: fadeInUp 0.5s ease 0.05s both;
+    /* ── All-time high (top-left, deliberately quiet) ── */
+    #top-left {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 10;
     }
     #all-time-record {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      font-size: 0.78rem;
+      gap: 6px;
+      font-size: 0.7rem;
       font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #b08d4a;
-      padding: 5px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 215, 110, 0.28);
-      background: rgba(255, 215, 110, 0.06);
+      color: #6e7681;
+      padding: 5px 10px;
+      border-radius: 9px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.05);
+      white-space: nowrap;
+      cursor: default;
     }
-    #all-time-record strong { color: #ffd76e; font-size: 0.95rem; font-weight: 800; }
-    #all-time-record .atr-day { color: #8b949e; text-transform: none; letter-spacing: 0.02em; }
-    /* Today *is* the record — light it up like the header badge. */
-    #all-time-record.atr-live {
-      color: #ffd76e;
-      border-color: rgba(255, 215, 110, 0.6);
-      animation: recordGlow 1.6s ease-in-out infinite;
-    }
-    #all-time-record.atr-live .atr-day { color: #ffd76e; }
+    #all-time-record strong { color: #9aa4b0; font-weight: 700; }
+    #all-time-record .atr-day { color: #5a6270; }
+    /* Today holds the record — a warmer tint, nothing more. */
+    #all-time-record.atr-live         { color: #a68a4f; border-color: rgba(255,215,110,0.22); }
+    #all-time-record.atr-live strong,
+    #all-time-record.atr-live .atr-day { color: #d9bd74; }
+
     @keyframes recordGlow {
       0%, 100% { box-shadow: 0 0 0 rgba(255, 215, 110, 0); transform: scale(1); }
       50%      { box-shadow: 0 0 16px rgba(255, 215, 110, 0.55); transform: scale(1.04); }
@@ -776,6 +775,10 @@
 </head>
 <body>
 
+  <div id="top-left">
+    <span id="all-time-record" style="display:none"></span>
+  </div>
+
   <div id="top-controls">
     <div id="interval-ctrl">
       <div id="interval-options">
@@ -846,10 +849,6 @@
     <span id="mood-emoji">⏳</span>
     <span id="mood-label">Loading…</span>
     <span id="record-badge" style="display:none"></span>
-  </div>
-
-  <div id="record-line">
-    <span id="all-time-record" style="display:none"></span>
   </div>
 
   <div id="stats-bar">
@@ -1225,28 +1224,31 @@
       return MOODS.find(m => rate >= m.min) || MOODS[MOODS.length - 1];
     }
 
-    // '2026-09-17' → '17 Sep 2026'. Parsed field by field rather than with
-    // `new Date(key)`, which would read the key as UTC and can land on the
-    // previous day west of Greenwich.
+    // '2026-09-17' → '17 Sep' ('17 Sep 2026' once it is not this year).
+    // Parsed field by field rather than with `new Date(key)`, which would read
+    // the key as UTC and can land on the previous day west of Greenwich.
     function formatDayKey(key) {
       const [y, m, d] = key.split('-').map(Number);
       return new Date(y, m - 1, d).toLocaleDateString(undefined, {
-        day: 'numeric', month: 'short', year: 'numeric',
+        day: 'numeric', month: 'short',
+        ...(y === new Date().getFullYear() ? {} : { year: 'numeric' }),
       });
     }
 
-    // The all-time high, always on screen once there is any history to show.
+    // The all-time high, parked top-left. Kept short and quiet on purpose —
+    // the full story is in the tooltip, and today's own celebration belongs to
+    // the header badge, so this one never animates.
     function renderAllTimeRecord(allTime) {
       const el = document.getElementById('all-time-record');
       if (!allTime?.count) { el.style.display = 'none'; return; }
 
       const isTodays = allTime.day === dayKey();
-      const when     = isTodays ? 'today' : `on ${formatDayKey(allTime.day)}`;
-      el.innerHTML   = `🏆 All-time high <strong>${allTime.count}</strong> passing builds <span class="atr-day">${when}</span>`;
+      const when     = isTodays ? 'today' : formatDayKey(allTime.day);
+      el.innerHTML   = `🏆 Best <strong>${allTime.count}</strong> <span class="atr-day">· ${when}</span>`;
       el.classList.toggle('atr-live', isTodays);
       el.title = isTodays
-        ? 'Today holds the record for passing builds in a day'
-        : `Best day so far: ${allTime.count} passing builds on ${allTime.day}`;
+        ? `All-time high: ${allTime.count} passing builds — set today`
+        : `All-time high: ${allTime.count} passing builds on ${allTime.day}`;
       el.style.display = '';
     }
 
