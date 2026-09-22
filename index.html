@@ -162,7 +162,14 @@
       border-radius: 14px;
       padding: 14px;
       min-width: 0;
+      cursor: grab;
     }
+    /* Dragged card stays in the grid as a ghost while the others shuffle. */
+    .card.dragging {
+      opacity: 0.35;
+      cursor: grabbing;
+    }
+    .card a, .card button { cursor: pointer; }
     .card-title {
       font-size: 0.78rem;
       font-weight: 700;
@@ -1329,6 +1336,9 @@
     // ── Fetch all ────────────────────────────────────────────────────────────
     async function fetchAll() {
       if (!REPOS.length) return;
+      // A refresh re-renders card contents, which would resize cards under the
+      // pointer mid-drag — let the drag finish first.
+      if (dragCard) return;
       const btn  = document.getElementById('refresh-btn');
       const tsEl = document.getElementById('last-refreshed');
 
@@ -1359,13 +1369,75 @@
         seen.add(r.name);
         const wfLabel = (r.workflows || []).join(' · ');
         html.push(`
-          <div class="card" id="card-${escHtml(r.name)}">
+          <div class="card" id="card-${escHtml(r.name)}" data-repo="${escHtml(r.name)}" draggable="true">
             <div class="card-title">${escHtml(r.name)}</div>
             <div class="card-subtitle">${escHtml(wfLabel)}</div>
             <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
           </div>`);
       });
       container.innerHTML = html.join('');
+    }
+
+    // ── Drag to reorder cards ────────────────────────────────────────────────
+    // The card grid is the source of truth while dragging: cards are moved in
+    // the DOM live, and the new order is written back to REPOS (and storage)
+    // once the drag ends.
+    let dragCard = null;
+
+    // Nearest drop slot to the pointer. Cards never overlap, so a hit inside
+    // one always wins; otherwise we fall back to the closest centre, which is
+    // what makes dropping into the gaps (or past the last card) work.
+    function cardDropTarget(container, x, y) {
+      let best = null, bestDist = Infinity;
+      container.querySelectorAll('.card:not(.dragging)').forEach(card => {
+        const r  = card.getBoundingClientRect();
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        const inside = x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+        const dist = inside ? -1 : (x - cx) ** 2 + (y - cy) ** 2;
+        if (dist < bestDist) { bestDist = dist; best = { card, after: x > cx }; }
+      });
+      return best;
+    }
+
+    function persistCardOrder() {
+      const names = [...document.querySelectorAll('#cards .card')].map(c => c.dataset.repo);
+      REPOS = applyRepoOrder(REPOS, names);
+      localStorage.setItem('gh_repos', JSON.stringify(REPOS));
+    }
+
+    function initCardDrag() {
+      const container = document.getElementById('cards');
+
+      container.addEventListener('dragstart', e => {
+        const card = e.target.closest('.card');
+        // Branch links and Merge/Auto Merge buttons keep their own behaviour —
+        // only the card body is a drag handle.
+        if (!card || e.target.closest('a, button')) { e.preventDefault(); return; }
+        dragCard = card;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', card.dataset.repo || '');
+        // Deferred so the drag image is the card as it looked when grabbed.
+        requestAnimationFrame(() => card.classList.add('dragging'));
+      });
+
+      container.addEventListener('dragover', e => {
+        if (!dragCard) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const target = cardDropTarget(container, e.clientX, e.clientY);
+        if (!target) return;
+        const ref = target.after ? target.card.nextSibling : target.card;
+        if (ref !== dragCard && ref !== dragCard.nextSibling) container.insertBefore(dragCard, ref);
+      });
+
+      container.addEventListener('drop', e => e.preventDefault());
+
+      container.addEventListener('dragend', () => {
+        if (!dragCard) return;
+        dragCard.classList.remove('dragging');
+        dragCard = null;
+        persistCardOrder();
+      });
     }
 
     // ── Settings: repo browser ───────────────────────────────────────────────
@@ -1739,6 +1811,9 @@
       // Straight from stored history, so the all-time high is on screen before
       // the first fetch lands (and even if there are no builds to show today).
       renderAllTimeRecord(allTimeRecord());
+      // Listeners live on the #cards container, so they survive every
+      // rebuildCards() — including the first one after the settings panel.
+      initCardDrag();
       if (!getToken() || !getOrg() || !REPOS.length) {
         openSettings();
         return;

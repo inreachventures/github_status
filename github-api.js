@@ -251,6 +251,19 @@ function recordDailyPasses(count, today = dayKey()) {
   };
 }
 
+// ── Card order ─────────────────────────────────────────────────────────────
+// Reorders the monitored repos to match `orderedNames` (the on-screen card
+// order after a drag). A repo whose name isn't in the list keeps its relative
+// position at the end, so a stale or unknown name can never drop a repo.
+function applyRepoOrder(repos, orderedNames) {
+  const rank = new Map(orderedNames.map((name, i) => [name, i]));
+  const unranked = orderedNames.length;
+  return repos
+    .map((repo, i) => ({ repo, i, rank: rank.has(repo.name) ? rank.get(repo.name) : unranked }))
+    .sort((a, b) => (a.rank - b.rank) || (a.i - b.i))
+    .map(x => x.repo);
+}
+
 // Node (tests) — browser <script src> just leaves these as globals.
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -258,6 +271,6 @@ if (typeof module !== 'undefined' && module.exports) {
     getToken, getOrg, ghFetch, fetchPRForBranch,
     createPRForBranch, setPRAutoMerge, mergeBranch, toggleAutoMergeBranch,
     dayKey, loadDailyRecords, saveDailyRecords, recordTier, recordDailyPasses,
-    allTimeRecord,
+    allTimeRecord, applyRepoOrder,
   };
 }
