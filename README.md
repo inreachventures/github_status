@@ -32,4 +32,5 @@ Then open `http://localhost:8765` in your browser.
 - Auto-refresh every 10 seconds (configurable from 10s to 2m)
 - Mood indicator based on overall build health
 - Click any run to open it in GitHub
+- Drag any card to reorder the grid — the order is remembered
 - Installable as a standalone macOS/Windows/Linux app via Chrome PWA
