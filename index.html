@@ -1030,12 +1030,12 @@
               runsByWf[wfName] = [];
             }
           })),
-          ghFetch(`/repos/${org}/${repo}/branches?per_page=100&sort=updated&direction=desc`).catch(() => null),
+          fetchAllBranches(repo),
           ghFetch(`/repos/${org}/${repo}/pulls?state=open&per_page=100`).catch(() => null),
           repoDefaultBranch[repo] ? Promise.resolve(null) : ghFetch(`/repos/${org}/${repo}`).catch(() => null),
         ]);
 
-        const activeBranches = new Set((branchesResp || []).map(b => b.name));
+        const activeBranches = branchesResp ? new Set(branchesResp) : null;
 
         prCache[repo] = {};
         (prsResp || []).forEach(pr => { prCache[repo][pr.head.ref] = pr; });
@@ -1132,10 +1132,8 @@
       const row = document.createElement('div');
       row.className = 'branch-row';
 
-      const activeBranches = allRunsByRepo[repo]?.activeBranches;
-      const branchExists   = !activeBranches || activeBranches.size === 0 || activeBranches.has(branch);
       const isDefaultBranch = /^(main|master|develop|development)$/.test(branch);
-      const isMerged       = !isDefaultBranch && !branchExists;
+      const isMerged       = !isDefaultBranch && isBranchGone(repo, branch);
 
       const dot = document.createElement('span');
       dot.className = `branch-dot ${isMerged ? 'merged' : branchSt}`;

@@ -6,7 +6,7 @@
 
 // { [repo]: { [branch]: pr | null } }
 let prCache = {};
-// { [repo]: { runsByWf: { [wfName]: [run,...] }, activeBranches: Set } }
+// { [repo]: { runsByWf: { [wfName]: [run,...] }, activeBranches: Set | null } }
 let allRunsByRepo = {};
 // { [repo]: string } — default branch name
 let repoDefaultBranch = {};
@@ -20,6 +20,40 @@ async function ghFetch(path) {
   });
   if (!res.ok) throw new Error(`${res.status}`);
   return res.json();
+}
+
+// Every branch name in the repo. The branches endpoint ignores sort params and
+// lists names alphabetically, so stopping at one page of 100 silently drops
+// everything later in the alphabet — and those branches then render as
+// "Merged". Returns null when the full list can't be fetched, so callers
+// treat existence as unknown instead of trusting a partial list.
+const BRANCH_PAGE_SIZE = 100;
+const BRANCH_MAX_PAGES = 20;
+
+async function fetchAllBranches(repo) {
+  const org = getOrg();
+  const names = [];
+  for (let page = 1; page <= BRANCH_MAX_PAGES; page++) {
+    let data;
+    try {
+      data = await ghFetch(`/repos/${org}/${repo}/branches?per_page=${BRANCH_PAGE_SIZE}&page=${page}`);
+    } catch {
+      return null;
+    }
+    data.forEach(b => names.push(b.name));
+    if (data.length < BRANCH_PAGE_SIZE) return names;
+  }
+  return null;
+}
+
+// A branch reads as merged once it's gone from the repo. An open PR proves it
+// isn't merged (e.g. one waiting on auto-merge), whatever the branch list says,
+// and with no branch list at all we can't tell, so we don't claim it.
+function isBranchGone(repo, branch) {
+  if (prCache[repo]?.[branch]) return false;
+  const active = allRunsByRepo[repo]?.activeBranches;
+  if (!active || active.size === 0) return false;
+  return !active.has(branch);
 }
 
 // Lazy PR fetch for a specific branch — only called when user clicks Merge/AUTO
@@ -268,7 +302,7 @@ function applyRepoOrder(repos, orderedNames) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     prCache, allRunsByRepo, repoDefaultBranch, retryConfig,
-    getToken, getOrg, ghFetch, fetchPRForBranch,
+    getToken, getOrg, ghFetch, fetchAllBranches, isBranchGone, fetchPRForBranch,
     createPRForBranch, setPRAutoMerge, mergeBranch, toggleAutoMergeBranch,
     dayKey, loadDailyRecords, saveDailyRecords, recordTier, recordDailyPasses,
     allTimeRecord, applyRepoOrder,
