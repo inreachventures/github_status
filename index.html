@@ -742,6 +742,7 @@
       transition: border-color 0.15s;
     }
     .s-input:focus { border-color: rgba(0,212,170,0.45); }
+    #s-entries { width: 80px; color-scheme: dark; }
     .s-input::placeholder { color: #334; }
 
     #settings-save {
@@ -838,6 +839,11 @@
         <label class="s-label">Available Repositories</label>
         <input id="repo-search" class="s-input" placeholder="Search repos…" spellcheck="false">
         <div id="repo-browser-list"></div>
+      </div>
+
+      <div class="s-section">
+        <label class="s-label" for="s-entries">Entries per card</label>
+        <input id="s-entries" type="number" class="s-input" min="1" max="50" step="1" inputmode="numeric">
       </div>
 
       <div class="s-section">
@@ -1017,13 +1023,16 @@
         // Fetch runs + branches + open PRs + (once) repo default branch in parallel
         const runsByWf = {};
         const org = getOrg();
+        // Several runs usually share a branch, so pull enough of them to fill
+        // the card when it is set to show more than a handful of branches.
+        const runsPerPage = Math.min(100, Math.max(20, getEntriesPerCard() * 4));
         const [, branchesResp, prsResp, repoResp] = await Promise.all([
           Promise.all((workflowNames || []).map(async wfName => {
             const wfId = wfIds[wfName];
             if (!wfId) { runsByWf[wfName] = []; return; }
             try {
               const d = await ghFetch(
-                `/repos/${org}/${repo}/actions/workflows/${wfId}/runs?per_page=20`
+                `/repos/${org}/${repo}/actions/workflows/${wfId}/runs?per_page=${runsPerPage}`
               );
               runsByWf[wfName] = d.workflow_runs || [];
             } catch(e) {
@@ -1080,14 +1089,14 @@
         byBranch[b].push(item);
       });
 
-      // Sort by most recent run desc, cap at 5 branches
+      // Sort by most recent run desc, cap at the "entries per card" setting
       const branches = Object.entries(byBranch)
         .sort((a, b) => {
           const aT = Math.max(...a[1].map(i => new Date(i.run.created_at).getTime()));
           const bT = Math.max(...b[1].map(i => new Date(i.run.created_at).getTime()));
           return bT - aT;
         })
-        .slice(0, 5);
+        .slice(0, getEntriesPerCard());
 
       // Split: today vs older (within the week)
       const todayBranches = branches.filter(([, items]) =>
@@ -1701,6 +1710,7 @@
     function openSettings() {
       document.getElementById('s-token').value = getToken();
       document.getElementById('s-org').value   = getOrg();
+      document.getElementById('s-entries').value = getEntriesPerCard();
       document.getElementById('repo-load-err').textContent = '';
 
       const list = document.getElementById('repos-list');
@@ -1725,10 +1735,11 @@
     }
 
     function resetAllData() {
-      if (!confirm('Remove your token, org, monitored repos, and daily build records?')) return;
+      if (!confirm('Remove your token, org, monitored repos, entries per card, and daily build records?')) return;
       localStorage.removeItem('gh_token');
       localStorage.removeItem('gh_org');
       localStorage.removeItem('gh_repos');
+      localStorage.removeItem('gh_entries_per_card');
       localStorage.removeItem('gh_daily_records');
       location.reload();
     }
@@ -1747,6 +1758,7 @@
       const org   = document.getElementById('s-org').value.trim();
       if (token) localStorage.setItem('gh_token', token);
       if (org)   localStorage.setItem('gh_org', org);
+      setEntriesPerCard(document.getElementById('s-entries').value);
 
       const newRepos = [];
       document.querySelectorAll('#repos-list .monitoring-pill').forEach(pill => {
