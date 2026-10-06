@@ -1,6 +1,6 @@
 # GitHub CI Status
 
-A minimal PWA that shows the last 5 GitHub Actions workflow runs for any set of repos, with auto-refresh. Can be installed as a standalone desktop app via Chrome.
+A minimal PWA that shows the latest GitHub Actions workflow runs for any set of repos (5 branches per card by default, adjustable in Settings), with auto-refresh. Can be installed as a standalone desktop app via Chrome.
 
 ## Quickest option — use the deployed app
 

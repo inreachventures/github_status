@@ -298,6 +298,30 @@ function applyRepoOrder(repos, orderedNames) {
     .map(x => x.repo);
 }
 
+// ── Entries per card ───────────────────────────────────────────────────────
+// How many branches each repo card lists. Anything missing or unparseable
+// falls back to the default; numbers outside the range are clamped into it.
+const ENTRIES_KEY     = 'gh_entries_per_card';
+const ENTRIES_DEFAULT = 5;
+const ENTRIES_MIN     = 1;
+const ENTRIES_MAX     = 50;
+
+function clampEntries(value) {
+  const n = parseInt(value, 10);
+  if (Number.isNaN(n)) return ENTRIES_DEFAULT;
+  return Math.min(ENTRIES_MAX, Math.max(ENTRIES_MIN, n));
+}
+
+function getEntriesPerCard() {
+  return clampEntries(localStorage.getItem(ENTRIES_KEY));
+}
+
+function setEntriesPerCard(value) {
+  const n = clampEntries(value);
+  try { localStorage.setItem(ENTRIES_KEY, String(n)); } catch(e) { /* private mode */ }
+  return n;
+}
+
 // Node (tests) — browser <script src> just leaves these as globals.
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -306,5 +330,7 @@ if (typeof module !== 'undefined' && module.exports) {
     createPRForBranch, setPRAutoMerge, mergeBranch, toggleAutoMergeBranch,
     dayKey, loadDailyRecords, saveDailyRecords, recordTier, recordDailyPasses,
     allTimeRecord, applyRepoOrder,
+    ENTRIES_DEFAULT, ENTRIES_MIN, ENTRIES_MAX,
+    clampEntries, getEntriesPerCard, setEntriesPerCard,
   };
 }
