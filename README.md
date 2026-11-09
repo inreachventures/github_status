@@ -1,4 +1,8 @@
-# GitHub CI Status
+<p align="center">
+  <img src="icon.svg" width="128" height="128" alt="GitHub CI Status app icon">
+</p>
+
+<h1 align="center">GitHub CI Status</h1>
 
 A minimal PWA that shows the latest GitHub Actions workflow runs for any set of repos (5 branches per card by default, adjustable in Settings), with auto-refresh. Can be installed as a standalone desktop app via Chrome.
 
